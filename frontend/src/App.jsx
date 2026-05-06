@@ -20,7 +20,7 @@ function App() {
               Sign Up
             </h1>
 
-            <div className="w-full flex-1 mt-8">
+            <div className="w-full flex-1 mt-8 pb-8">
               {/* Social Buttons */}
               <div className="flex flex-col items-center">
                 {/* Google */}
