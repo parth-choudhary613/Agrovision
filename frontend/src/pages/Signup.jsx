@@ -6,7 +6,6 @@ const Signup = () => {
   const [username, setUsername] = useState('');
   const [phone, setPhone] = useState('');
   const navigate = useNavigate();
-
   // Google Callback
   useEffect(() => {
     window.handleGoogleCallback = async (response) => {
@@ -14,10 +13,12 @@ const Signup = () => {
         const res = await axios.post('http://localhost:5000/api/auth/google', {
           credential: response.credential
         });
+        
         localStorage.setItem('token', res.data.token);
         navigate('/dashboard');
       } catch (err) {
-        alert('Google Signup Failed');
+        console.error(err.response?.data || err);
+        alert('Google Signup Failed: ' + (err.response?.data?.msg || err.message));
       }
     };
 
@@ -25,9 +26,11 @@ const Signup = () => {
     script.src = "https://accounts.google.com/gsi/client";
     script.async = true;
     document.body.appendChild(script);
-  }, []);
 
-  const handlePhoneSignup = async () => {
+    return () => delete window.handleGoogleCallback;
+  }, [navigate]);
+  
+    const handlePhoneSignup = async () => {
     if (!username || !phone) return alert("Please fill all fields");
     try {
       const res = await axios.post('http://localhost:5000/api/auth/phone', { username, phone });
