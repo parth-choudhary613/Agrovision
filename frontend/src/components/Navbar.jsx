@@ -1,37 +1,57 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
 const Navbar = () => {
   const [username, setUsername] = useState('');
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Don't show user info on signup page
+  const isSignupPage = location.pathname === '/';
 
   useEffect(() => {
     const token = localStorage.getItem('token');
-    if (token) {
+    
+    if (token && !isSignupPage) {
       axios.get('http://localhost:5000/api/auth/me', {
         headers: { Authorization: `Bearer ${token}` }
-      }).then(res => {
+      })
+      .then(res => {
         setUsername(res.data.username);
-      }).catch(() => localStorage.removeItem('token'));
+        setIsLoggedIn(true);
+      })
+      .catch(() => {
+        localStorage.removeItem('token');
+        setIsLoggedIn(false);
+      });
+    } else {
+      setIsLoggedIn(false);
     }
-  }, []);
+  }, [isSignupPage]);
 
   const logout = () => {
     localStorage.removeItem('token');
+    setIsLoggedIn(false);
     navigate('/');
   };
 
   return (
-    <nav className="bg-gray-900 text-white p-5 flex justify-between items-center shadow-lg">
-      <div className="text-2xl font-bold">AgroVision</div>
-      
-      {username && (
-        <div className="flex items-center gap-6">
-          <span className="text-lg font-medium">👋 {username}</span>
+    <nav className="bg-gray-950 border-b border-green-800 px-8 py-4 flex justify-between items-center sticky top-0 z-50">
+      <div className="flex items-center gap-3">
+        <div className="text-2xl font-bold text-white">AgroVision</div>
+      </div>
+
+      {/* Show username & logout ONLY when logged in AND not on signup page */}
+      {isLoggedIn && !isSignupPage && (
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 text-white">
+            👋 <span className="font-medium">{username}</span>
+          </div>
           <button
             onClick={logout}
-            className="bg-red-600 hover:bg-red-700 px-5 py-2 rounded-lg font-medium"
+            className="bg-red-600 hover:bg-red-700 px-5 py-2 rounded-xl text-sm font-medium transition"
           >
             Logout
           </button>
