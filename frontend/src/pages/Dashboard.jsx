@@ -10,6 +10,7 @@ import {
 
 const Dashboard = () => {
   const [username, setUsername] = useState('');
+  const [picture, setPicture] = useState('');   // Google profile pic URL
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [openDropdown, setOpenDropdown] = useState(false);
 
@@ -19,6 +20,12 @@ const Dashboard = () => {
   const location = useLocation();
 
   const isSignupPage = location.pathname === '/';
+
+  // Returns first name only (e.g. "John Doe" → "John")
+  const firstName = username ? username.split(' ')[0] : '';
+
+  // First letter of username for avatar fallback
+  const initial = username ? username.charAt(0).toUpperCase() : '?';
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -35,7 +42,10 @@ const Dashboard = () => {
         },
       })
       .then((res) => {
+        // Backend must return: { username, picture }
+        // picture is the Google profile image URL (empty string for phone users)
         setUsername(res.data.username);
+        setPicture(res.data.picture || '');
         setIsLoggedIn(true);
       })
       .catch(() => {
@@ -59,10 +69,7 @@ const Dashboard = () => {
     document.addEventListener('mousedown', handleClickOutside);
 
     return () => {
-      document.removeEventListener(
-        'mousedown',
-        handleClickOutside
-      );
+      document.removeEventListener('mousedown', handleClickOutside);
     };
   }, []);
 
@@ -71,16 +78,41 @@ const Dashboard = () => {
     navigate('/');
   };
 
+  // Avatar: Google pic if available, else coloured initial circle
+  const Avatar = ({ size = 'md' }) => {
+    const dimensions = size === 'sm' ? 'w-9 h-9 text-sm' : 'w-11 h-11 text-base';
+
+    if (picture) {
+      return (
+        <img
+          src={picture}
+          alt="profile"
+          className={`${dimensions} rounded-full object-cover border border-gray-200 flex-shrink-0`}
+          referrerPolicy="no-referrer"   // required for Google avatars
+        />
+      );
+    }
+
+    return (
+      <div
+        className={`${dimensions} rounded-full bg-green-700 text-white flex items-center justify-center font-bold flex-shrink-0 border border-green-600`}
+      >
+        {initial}
+      </div>
+    );
+  };
+
   return (
     <div className="min-h-screen bg-[#f5f5f5] lg:ml-72">
-      
+
       {/* Top Navbar */}
       <div className="w-full bg-white border-b border-gray-200 px-6 lg:px-8 py-5 flex items-center justify-between">
-        
+
         {/* Left */}
         <div>
           <h1 className="text-3xl lg:text-5xl font-bold text-black">
-            Welcome back, {username}! 👋
+            {/* Show first name for Google users, full username for phone users */}
+            Welcome back, {firstName}! 👋
           </h1>
 
           <p className="text-gray-500 text-sm lg:text-xl mt-2">
@@ -90,22 +122,17 @@ const Dashboard = () => {
 
         {/* Right */}
         <div className="flex items-center gap-4 lg:gap-6">
-          
+
           {/* Language */}
           <div className="hidden md:flex items-center gap-2 border border-gray-200 rounded-xl px-4 py-3 cursor-pointer hover:bg-gray-50 transition">
             <Languages size={18} className="text-gray-600" />
-
-            <span className="font-medium text-gray-700">
-              English
-            </span>
-
+            <span className="font-medium text-gray-700">English</span>
             <ChevronDown size={18} className="text-gray-500" />
           </div>
 
           {/* Notification */}
           <div className="relative cursor-pointer">
             <Bell size={24} className="text-gray-700" />
-
             <div className="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] w-5 h-5 rounded-full flex items-center justify-center font-semibold">
               3
             </div>
@@ -114,51 +141,40 @@ const Dashboard = () => {
           {/* Profile Dropdown */}
           {isLoggedIn && !isSignupPage && (
             <div className="relative" ref={dropdownRef}>
-              
+
               <div
-                onClick={() =>
-                  setOpenDropdown(!openDropdown)
-                }
+                onClick={() => setOpenDropdown(!openDropdown)}
                 className="flex items-center gap-3 cursor-pointer hover:bg-gray-100 px-3 py-2 rounded-xl transition"
               >
-                <img
-                  src="https://i.pravatar.cc/150?img=12"
-                  alt="profile"
-                  className="w-11 h-11 rounded-full object-cover border"
-                />
+                {/* Avatar: Google pic OR initial */}
+                <Avatar size="md" />
 
                 <div className="hidden md:block leading-tight">
+                  {/* Show first name only in the dropdown trigger */}
                   <h3 className="font-semibold text-gray-800 text-[15px]">
-                    {username}
+                    {firstName}
                   </h3>
-
-                  <p className="text-sm text-gray-500">
-                    Farmer
-                  </p>
+                  <p className="text-sm text-gray-500">Farmer</p>
                 </div>
 
                 <ChevronDown
                   size={18}
-                  className={`text-gray-500 transition ${
-                    openDropdown
-                      ? 'rotate-180'
-                      : ''
-                  }`}
+                  className={`text-gray-500 transition ${openDropdown ? 'rotate-180' : ''}`}
                 />
               </div>
 
               {/* Dropdown Menu */}
               {openDropdown && (
-                <div className="absolute right-0 top-16 w-52 bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden z-50">
-                  
-                  <div className="px-5 py-4 border-b border-gray-100">
-                    <h3 className="font-semibold text-gray-800">
-                      {username}
-                    </h3>
+                <div className="absolute right-0 top-16 w-56 bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden z-50">
 
-                    <p className="text-sm text-gray-500">
-                      Farmer Account
-                    </p>
+                  {/* Profile header inside dropdown */}
+                  <div className="px-5 py-4 border-b border-gray-100 flex items-center gap-3">
+                    <Avatar size="sm" />
+                    <div className="min-w-0">
+                      {/* Full name here */}
+                      <h3 className="font-semibold text-gray-800 truncate">{username}</h3>
+                      <p className="text-sm text-gray-500">Farmer Account</p>
+                    </div>
                   </div>
 
                   <button
@@ -175,26 +191,20 @@ const Dashboard = () => {
           {/* Scan Button */}
           <button className="bg-green-700 hover:bg-green-800 text-white px-5 lg:px-7 py-3 lg:py-4 rounded-2xl flex items-center gap-2 text-sm lg:text-lg font-medium shadow-md transition">
             <Plus size={20} />
-            <span className="hidden md:block">
-              Scan New Plant
-            </span>
+            <span className="hidden md:block">Scan New Plant</span>
           </button>
         </div>
       </div>
 
       {/* Main Content */}
       <div className="p-6 lg:p-8">
-        
         <div className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100 min-h-[500px]">
-          
           <h2 className="text-2xl font-bold text-gray-800 mb-3">
             Dashboard Overview
           </h2>
-
           <p className="text-gray-500">
             Your smart farming analytics and tools will appear here.
           </p>
-
         </div>
       </div>
     </div>

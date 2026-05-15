@@ -23,20 +23,26 @@ router.post('/google', async (req, res) => {
       user = await User.create({
         googleId: payload.sub,
         email: payload.email,
-        username: fullName
+        username: fullName,
+        picture: payload.picture || '',   // ← Google profile image URL
       });
+    } else {
+      // Refresh picture in case user updated their Google avatar
+      if (payload.picture && user.picture !== payload.picture) {
+        user.picture = payload.picture;
+        await user.save();
+      }
     }
 
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
-
-    res.json({ token, user: { username: user.username } });
+    res.json({ token, user: { username: user.username, picture: user.picture } });
   } catch (err) {
     console.error(err);
     res.status(400).json({ msg: 'Google authentication failed' });
   }
 });
 
-// Phone Signup (Fixed - Only allow if username & phone provided)
+// Phone Signup/Login
 router.post('/phone', async (req, res) => {
   try {
     const { username, phone } = req.body;
@@ -47,15 +53,20 @@ router.post('/phone', async (req, res) => {
 
     let user = await User.findOne({ phone });
     if (!user) {
-      user = await User.create({ username, phone });
+      user = await User.create({
+        username,
+        phone,
+        picture: '',   // ← no picture for phone users; frontend shows initial instead
+      });
     }
 
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
-    res.json({ token, user: { username: user.username } });
+    res.json({ token, user: { username: user.username, picture: user.picture } });
   } catch (err) {
     res.status(400).json({ msg: err.message });
   }
 });
+
 // Get Current User
 router.get('/me', async (req, res) => {
   try {
@@ -63,11 +74,16 @@ router.get('/me', async (req, res) => {
     if (!token) return res.status(401).json({ msg: "No token" });
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const user = await User.findById(decoded.id).select('username email');
+
+    // ← select picture alongside username and email
+    const user = await User.findById(decoded.id).select('username email picture');
 
     if (!user) return res.status(404).json({ msg: "User not found" });
 
-    res.json({ username: user.username });
+    res.json({
+      username: user.username,
+      picture: user.picture || '',   // ← always return picture (empty string for phone users)
+    });
   } catch (err) {
     res.status(401).json({ msg: "Invalid token" });
   }

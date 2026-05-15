@@ -6,6 +6,16 @@ import { auth } from '../firebase/firebase';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Leaf, Sprout, Phone, User, ShieldCheck, ChevronRight } from 'lucide-react';
 
+// Decode the Google JWT credential to extract name, email, picture
+const decodeGoogleJWT = (token) => {
+  try {
+    const base64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+    return JSON.parse(atob(base64));
+  } catch {
+    return {};
+  }
+};
+
 const Signup = () => {
   const [step, setStep] = useState(1);
   const [username, setUsername] = useState('');
@@ -15,7 +25,6 @@ const Signup = () => {
   const [confirmationResult, setConfirmationResult] = useState(null);
   const navigate = useNavigate();
 
-  // Google Sign In Setup (unchanged logic, updated UI container)
   useEffect(() => {
     const script = document.createElement('script');
     script.src = "https://accounts.google.com/gsi/client";
@@ -25,12 +34,22 @@ const Signup = () => {
         client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
         callback: async (response) => {
           try {
+            // Decode the JWT to get name and picture from Google
+            const payload = decodeGoogleJWT(response.credential);
+
+            // Send credential + decoded fields to backend
+            // Backend should store name and picture and return them in /api/auth/me
             const res = await axios.post('http://localhost:5000/api/auth/google', {
-              credential: response.credential
+              credential: response.credential,
+              name: payload.name,       // Full name from Google
+              picture: payload.picture, // Profile picture URL from Google
             });
+
             localStorage.setItem('token', res.data.token);
             navigate('/dashboard');
-          } catch (err) { alert('Google Signup Failed'); }
+          } catch (err) {
+            alert('Google Signup Failed');
+          }
         }
       });
       window.google.accounts.id.renderButton(
@@ -57,32 +76,39 @@ const Signup = () => {
       setConfirmationResult(result);
       setPhone(formattedPhone);
       setStep(2);
-    } catch (err) { alert("Failed to send OTP: " + err.message); }
-    finally { setLoading(false); }
+    } catch (err) {
+      alert("Failed to send OTP: " + err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const verifyOTP = async () => {
     setLoading(true);
     try {
       const result = await confirmationResult.confirm(otp);
+      // Phone login: send username and phone. No picture — backend stores empty string.
       const res = await axios.post('http://localhost:5000/api/auth/phone', {
-        username, phone: result.user.phoneNumber
+        username,
+        phone: result.user.phoneNumber,
       });
       localStorage.setItem('token', res.data.token);
       navigate('/dashboard');
-    } catch (err) { alert("Invalid OTP"); }
-    finally { setLoading(false); }
+    } catch (err) {
+      alert("Invalid OTP");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <div className="relative min-h-screen w-full flex items-center justify-center p-6 overflow-hidden bg-[#041a0b]">
-      
-      {/* --- UNIQUE BACKGROUND ELEMENTS --- */}
+
       {/* Animated Gradient Orbs */}
       <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-green-600/20 rounded-full blur-[120px] animate-pulse" />
       <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-emerald-900/40 rounded-full blur-[120px]" />
-      
-      {/* Floating 3D Leaf Particles */}
+
+      {/* Floating Leaf Particles */}
       {[...Array(8)].map((_, i) => (
         <motion.div
           key={i}
@@ -95,14 +121,14 @@ const Signup = () => {
         </motion.div>
       ))}
 
-      {/* --- SIGNUP CARD --- */}
-      <motion.div 
+      {/* Signup Card */}
+      <motion.div
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         className="relative z-10 w-full max-w-md backdrop-blur-xl bg-white/5 border border-white/10 p-8 rounded-[2.5rem] shadow-2xl"
       >
         <div className="text-center mb-8">
-          <motion.div 
+          <motion.div
             animate={{ rotate: [0, 10, -10, 0] }}
             transition={{ repeat: Infinity, duration: 4 }}
             className="inline-block p-3 bg-green-500/20 rounded-2xl mb-4"
@@ -123,7 +149,7 @@ const Signup = () => {
 
         <AnimatePresence mode="wait">
           {step === 1 ? (
-            <motion.div 
+            <motion.div
               key="step1"
               initial={{ x: 20, opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
@@ -132,31 +158,32 @@ const Signup = () => {
             >
               <div className="relative group">
                 <User className="absolute left-4 top-4 text-gray-500 group-focus-within:text-green-400 transition-colors" size={20} />
-                <input 
-                  type="text" 
-                  placeholder="Full Name" 
-                  value={username} 
-                  onChange={e => setUsername(e.target.value)} 
+                <input
+                  type="text"
+                  placeholder="Full Name"
+                  value={username}
+                  onChange={e => setUsername(e.target.value)}
                   className="w-full pl-12 pr-4 py-4 bg-white/5 border border-white/10 rounded-2xl text-white placeholder:text-gray-600 focus:outline-none focus:border-green-500/50 focus:bg-white/10 transition-all"
                 />
               </div>
 
               <div className="relative group">
                 <Phone className="absolute left-4 top-4 text-gray-500 group-focus-within:text-green-400 transition-colors" size={20} />
-                <input 
-                  type="tel" 
-                  placeholder="Phone Number" 
-                  value={phone} 
-                  onChange={e => setPhone(e.target.value)} 
+                <input
+                  type="tel"
+                  placeholder="Phone Number"
+                  value={phone}
+                  onChange={e => setPhone(e.target.value)}
                   className="w-full pl-12 pr-4 py-4 bg-white/5 border border-white/10 rounded-2xl text-white placeholder:text-gray-600 focus:outline-none focus:border-green-500/50 focus:bg-white/10 transition-all"
                 />
+                <div id="recaptcha-container"></div>
               </div>
 
-              <motion.button 
+              <motion.button
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                onClick={sendOTP} 
-                disabled={loading} 
+                onClick={sendOTP}
+                disabled={loading}
                 className="w-full bg-gradient-to-r from-green-600 to-emerald-500 py-4 rounded-2xl text-white font-bold flex items-center justify-center gap-2 shadow-lg shadow-green-900/20"
               >
                 {loading ? "Preparing Fields..." : "Send Verification OTP"}
@@ -164,7 +191,7 @@ const Signup = () => {
               </motion.button>
             </motion.div>
           ) : (
-            <motion.div 
+            <motion.div
               key="step2"
               initial={{ x: 20, opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
@@ -177,18 +204,18 @@ const Signup = () => {
                 </div>
               </div>
 
-              <input 
-                type="text" 
-                maxLength="6" 
-                value={otp} 
-                onChange={e => setOtp(e.target.value)} 
-                className="w-full p-5 text-4xl text-center tracking-[1rem] bg-white/5 border border-white/10 rounded-2xl text-green-400 focus:outline-none focus:border-green-500 focus:bg-white/10 transition-all font-mono" 
-                placeholder="000000" 
+              <input
+                type="text"
+                maxLength="6"
+                value={otp}
+                onChange={e => setOtp(e.target.value)}
+                className="w-full p-5 text-4xl text-center tracking-[1rem] bg-white/5 border border-white/10 rounded-2xl text-green-400 focus:outline-none focus:border-green-500 focus:bg-white/10 transition-all font-mono"
+                placeholder="000000"
               />
 
-              <button 
-                onClick={verifyOTP} 
-                disabled={loading} 
+              <button
+                onClick={verifyOTP}
+                disabled={loading}
                 className="w-full bg-gradient-to-r from-green-600 to-emerald-500 py-4 rounded-2xl text-white font-bold shadow-lg"
               >
                 {loading ? "Confirming..." : "Grow Your Account"}
