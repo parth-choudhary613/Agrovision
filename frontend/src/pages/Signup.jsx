@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { RecaptchaVerifier, signInWithPhoneNumber } from 'firebase/auth';
 import { auth } from '../firebase/firebase';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Leaf, Sprout, Phone, User, ShieldCheck, ChevronRight } from 'lucide-react';
 
 const Signup = () => {
   const [step, setStep] = useState(1);
@@ -13,7 +15,7 @@ const Signup = () => {
   const [confirmationResult, setConfirmationResult] = useState(null);
   const navigate = useNavigate();
 
-  // Google Sign In
+  // Google Sign In Setup (unchanged logic, updated UI container)
   useEffect(() => {
     const script = document.createElement('script');
     script.src = "https://accounts.google.com/gsi/client";
@@ -28,135 +30,175 @@ const Signup = () => {
             });
             localStorage.setItem('token', res.data.token);
             navigate('/dashboard');
-          } catch (err) {
-            alert('Google Signup Failed');
-          }
+          } catch (err) { alert('Google Signup Failed'); }
         }
       });
-
       window.google.accounts.id.renderButton(
         document.getElementById("googleButton"),
-        { theme: "filled_black", size: "large", text: "continue_with", shape: "pill" }
+        { theme: "outline", size: "large", text: "continue_with", shape: "pill", width: "100%" }
       );
     };
     document.body.appendChild(script);
   }, [navigate]);
 
- const sendOTP = async () => {
-  if (!username || !phone) {
-    return alert("Name and Phone are required");
-  }
-
-  let formattedPhone = phone.trim();
-
-  // Remove spaces and special characters
-  formattedPhone = formattedPhone.replace(/\s+/g, '');
-
-  // Add +91 if user entered only 10 digits
-  if (!formattedPhone.startsWith('+91')) {
-    if (formattedPhone.length === 10) {
-      formattedPhone = '+91' + formattedPhone;
-    } else {
-      return alert("Enter valid Indian phone number");
+  const sendOTP = async () => {
+    if (!username || !phone) return alert("Name and Phone are required");
+    let formattedPhone = phone.trim().replace(/\s+/g, '');
+    if (!formattedPhone.startsWith('+91')) {
+      if (formattedPhone.length === 10) formattedPhone = '+91' + formattedPhone;
+      else return alert("Enter valid Indian phone number");
     }
-  }
-
-  setLoading(true);
-
-  try {
-    // Prevent multiple recaptcha creation
-    if (!window.recaptchaVerifier) {
-      window.recaptchaVerifier = new RecaptchaVerifier(
-        auth,
-        'recaptcha-container',
-        {
-          size: 'invisible',
-        }
-      );
-    }
-
-    const appVerifier = window.recaptchaVerifier;
-
-    const result = await signInWithPhoneNumber(
-      auth,
-      formattedPhone,
-      appVerifier
-    );
-
-    setConfirmationResult(result);
-    setPhone(formattedPhone);
-
-    setStep(2);
-
-    alert("OTP Sent Successfully!");
-
-  } catch (err) {
-    console.error("Send OTP Error:", err);
-    alert("Failed to send OTP: " + err.message);
-  } finally {
-    setLoading(false);
-  }
-};
+    setLoading(true);
+    try {
+      if (!window.recaptchaVerifier) {
+        window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', { size: 'invisible' });
+      }
+      const result = await signInWithPhoneNumber(auth, formattedPhone, window.recaptchaVerifier);
+      setConfirmationResult(result);
+      setPhone(formattedPhone);
+      setStep(2);
+    } catch (err) { alert("Failed to send OTP: " + err.message); }
+    finally { setLoading(false); }
+  };
 
   const verifyOTP = async () => {
     setLoading(true);
     try {
       const result = await confirmationResult.confirm(otp);
       const res = await axios.post('http://localhost:5000/api/auth/phone', {
-        username,
-        phone: result.user.phoneNumber
+        username, phone: result.user.phoneNumber
       });
-
       localStorage.setItem('token', res.data.token);
       navigate('/dashboard');
-    } catch (err) {
-      alert("Invalid OTP");
-    } finally {
-      setLoading(false);
-    }
+    } catch (err) { alert("Invalid OTP"); }
+    finally { setLoading(false); }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-950 to-teal-950 flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        <div className="text-center mb-10">
-          <h1 className="text-6xl font-bold text-white">AgroVision</h1>
-          <p className="text-green-400 mt-2">Empowering Farmers</p>
+    <div className="relative min-h-screen w-full flex items-center justify-center p-6 overflow-hidden bg-[#041a0b]">
+      
+      {/* --- UNIQUE BACKGROUND ELEMENTS --- */}
+      {/* Animated Gradient Orbs */}
+      <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-green-600/20 rounded-full blur-[120px] animate-pulse" />
+      <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-emerald-900/40 rounded-full blur-[120px]" />
+      
+      {/* Floating 3D Leaf Particles */}
+      {[...Array(8)].map((_, i) => (
+        <motion.div
+          key={i}
+          initial={{ y: "100vh", x: Math.random() * 100 + "vw", rotate: 0 }}
+          animate={{ y: "-10vh", x: Math.random() * 100 + "vw", rotate: 360 }}
+          transition={{ duration: 15 + Math.random() * 10, repeat: Infinity, ease: "linear" }}
+          className="absolute text-green-500/20 pointer-events-none"
+        >
+          <Leaf size={24 + Math.random() * 40} />
+        </motion.div>
+      ))}
+
+      {/* --- SIGNUP CARD --- */}
+      <motion.div 
+        initial={{ opacity: 0, y: 30 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="relative z-10 w-full max-w-md backdrop-blur-xl bg-white/5 border border-white/10 p-8 rounded-[2.5rem] shadow-2xl"
+      >
+        <div className="text-center mb-8">
+          <motion.div 
+            animate={{ rotate: [0, 10, -10, 0] }}
+            transition={{ repeat: Infinity, duration: 4 }}
+            className="inline-block p-3 bg-green-500/20 rounded-2xl mb-4"
+          >
+            <Sprout className="text-green-400" size={40} />
+          </motion.div>
+          <h1 className="text-4xl font-extrabold text-white tracking-tight">AgroVision</h1>
+          <p className="text-green-400/80 font-medium italic">Cultivating the Future</p>
         </div>
 
-        <div className="bg-gray-900 p-10 rounded-3xl">
-          <div id="googleButton" className="mb-8 flex justify-center"></div>
+        <div id="googleButton" className="mb-6 w-full overflow-hidden rounded-xl" />
 
-          <div className="text-center text-gray-400 my-6">—————— OR ——————</div>
+        <div className="flex items-center my-6">
+          <div className="flex-grow h-[1px] bg-white/10"></div>
+          <span className="px-4 text-xs font-bold text-gray-500 uppercase tracking-widest">Or Secure Login</span>
+          <div className="flex-grow h-[1px] bg-white/10"></div>
+        </div>
 
+        <AnimatePresence mode="wait">
           {step === 1 ? (
-            <>
-              <input type="text" placeholder="Full Name" value={username} onChange={e => setUsername(e.target.value)} className="w-full p-4 bg-gray-800 rounded-xl mb-4" />
-            <input
-  type="tel"
-  placeholder="9876543210"
-  value={phone}
-  onChange={(e) => setPhone(e.target.value)}
-  className="w-full p-4 bg-gray-800 rounded-xl mb-6"
-/>
-              <button onClick={sendOTP} disabled={loading} className="w-full bg-green-600 py-4 rounded-xl text-lg font-bold">
-                {loading ? "Sending OTP..." : "Send OTP"}
-              </button>
-            </>
+            <motion.div 
+              key="step1"
+              initial={{ x: 20, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              exit={{ x: -20, opacity: 0 }}
+              className="space-y-4"
+            >
+              <div className="relative group">
+                <User className="absolute left-4 top-4 text-gray-500 group-focus-within:text-green-400 transition-colors" size={20} />
+                <input 
+                  type="text" 
+                  placeholder="Full Name" 
+                  value={username} 
+                  onChange={e => setUsername(e.target.value)} 
+                  className="w-full pl-12 pr-4 py-4 bg-white/5 border border-white/10 rounded-2xl text-white placeholder:text-gray-600 focus:outline-none focus:border-green-500/50 focus:bg-white/10 transition-all"
+                />
+              </div>
+
+              <div className="relative group">
+                <Phone className="absolute left-4 top-4 text-gray-500 group-focus-within:text-green-400 transition-colors" size={20} />
+                <input 
+                  type="tel" 
+                  placeholder="Phone Number" 
+                  value={phone} 
+                  onChange={e => setPhone(e.target.value)} 
+                  className="w-full pl-12 pr-4 py-4 bg-white/5 border border-white/10 rounded-2xl text-white placeholder:text-gray-600 focus:outline-none focus:border-green-500/50 focus:bg-white/10 transition-all"
+                />
+              </div>
+
+              <motion.button 
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={sendOTP} 
+                disabled={loading} 
+                className="w-full bg-gradient-to-r from-green-600 to-emerald-500 py-4 rounded-2xl text-white font-bold flex items-center justify-center gap-2 shadow-lg shadow-green-900/20"
+              >
+                {loading ? "Preparing Fields..." : "Send Verification OTP"}
+                <ChevronRight size={20} />
+              </motion.button>
+            </motion.div>
           ) : (
-            <>
-              <p className="text-center mb-4 text-green-400">Enter OTP sent to {phone}</p>
-              <input type="text" maxLength="6" value={otp} onChange={e => setOtp(e.target.value)} className="w-full p-6 text-3xl text-center tracking-widest bg-gray-800 rounded-xl mb-6" placeholder="123456" />
+            <motion.div 
+              key="step2"
+              initial={{ x: 20, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              exit={{ x: -20, opacity: 0 }}
+              className="space-y-6"
+            >
+              <div className="text-center">
+                <div className="inline-flex items-center gap-2 px-3 py-1 bg-green-500/10 border border-green-500/20 rounded-full text-green-400 text-sm mb-4">
+                  <ShieldCheck size={16} /> Verifying {phone}
+                </div>
+              </div>
 
-              <button onClick={verifyOTP} disabled={loading} className="w-full bg-green-600 py-4 rounded-xl text-lg font-bold">
-                {loading ? "Verifying..." : "Verify OTP"}
+              <input 
+                type="text" 
+                maxLength="6" 
+                value={otp} 
+                onChange={e => setOtp(e.target.value)} 
+                className="w-full p-5 text-4xl text-center tracking-[1rem] bg-white/5 border border-white/10 rounded-2xl text-green-400 focus:outline-none focus:border-green-500 focus:bg-white/10 transition-all font-mono" 
+                placeholder="000000" 
+              />
+
+              <button 
+                onClick={verifyOTP} 
+                disabled={loading} 
+                className="w-full bg-gradient-to-r from-green-600 to-emerald-500 py-4 rounded-2xl text-white font-bold shadow-lg"
+              >
+                {loading ? "Confirming..." : "Grow Your Account"}
               </button>
-            </>
+            </motion.div>
           )}
+        </AnimatePresence>
 
-          <div id="recaptcha-container" className="mt-6"></div>
-        </div>
-      </div>
+        <div id="recaptcha-container" className="mt-4 flex justify-center scale-90" />
+      </motion.div>
     </div>
   );
 };
