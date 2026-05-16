@@ -52,13 +52,18 @@ router.post('/phone', async (req, res) => {
     }
 
     let user = await User.findOne({ phone });
-    if (!user) {
-      user = await User.create({
-        username,
-        phone,
-        picture: '',   // ← no picture for phone users; frontend shows initial instead
-      });
-    }
+
+if (!user) {
+  user = await User.create({
+    username,
+    phone,
+    picture: '',
+  });
+} else {
+  // Update username if changed
+  user.username = username;
+  await user.save();
+}
 
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
     res.json({ token, user: { username: user.username, picture: user.picture } });
@@ -80,10 +85,11 @@ router.get('/me', async (req, res) => {
 
     if (!user) return res.status(404).json({ msg: "User not found" });
 
-    res.json({
-      username: user.username,
-      picture: user.picture || '',   // ← always return picture (empty string for phone users)
-    });
+  res.json({
+  username: user.username,
+  picture: user.picture || '',
+  loginType: user.googleId ? 'google' : 'phone',
+});
   } catch (err) {
     res.status(401).json({ msg: "Invalid token" });
   }

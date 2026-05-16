@@ -13,7 +13,8 @@ const Dashboard = () => {
   const [picture, setPicture] = useState('');   // Google profile pic URL
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [openDropdown, setOpenDropdown] = useState(false);
-
+const [loginType, setLoginType] = useState('');
+  
   const dropdownRef = useRef();
 
   const navigate = useNavigate();
@@ -28,32 +29,35 @@ const Dashboard = () => {
   const initial = username ? username.charAt(0).toUpperCase() : '?';
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
+  const token = localStorage.getItem('token');
 
-    if (!token) {
+  if (!token) {
+    navigate('/');
+    return;
+  }
+
+  axios
+    .get('http://localhost:5000/api/auth/me', {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
+    .then((res) => {
+      setUsername(res.data.username || '');
+      setPicture(res.data.picture || '');
+      setLoginType(res.data.loginType || '');
+      setIsLoggedIn(true);
+    })
+    .catch((err) => {
+      console.log(err);
+
+      localStorage.removeItem('token');
+
+      setIsLoggedIn(false);
+
       navigate('/');
-      return;
-    }
-
-    axios
-      .get('http://localhost:5000/api/auth/me', {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      })
-      .then((res) => {
-        // Backend must return: { username, picture }
-        // picture is the Google profile image URL (empty string for phone users)
-        setUsername(res.data.username);
-        setPicture(res.data.picture || '');
-        setIsLoggedIn(true);
-      })
-      .catch(() => {
-        localStorage.removeItem('token');
-        setIsLoggedIn(false);
-        navigate('/');
-      });
-  }, [navigate]);
+    });
+}, [navigate]);
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -112,7 +116,7 @@ const Dashboard = () => {
         <div>
           <h1 className="text-3xl lg:text-5xl font-bold text-black">
             {/* Show first name for Google users, full username for phone users */}
-            Welcome back, {firstName}! 👋
+            Welcome back, {loginType === 'phone' ? username : firstName}!👋
           </h1>
 
           <p className="text-gray-500 text-sm lg:text-xl mt-2">

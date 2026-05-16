@@ -44,10 +44,10 @@ const Sidebar = () => {
 
       {/* Sidebar Container */}
       <aside className={`
-        fixed top-0 left-0 h-screen bg-white border-r border-gray-100 transition-transform duration-300 z-40
-        w-72 p-6 flex flex-col
-        ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
-      `}>
+  fixed top-0 left-0 h-screen bg-white border-r border-gray-100 transition-transform duration-300 z-50
+  w-72 p-6 flex flex-col
+  ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+`}>
         
         {/* Logo Section */}
         <div className="flex items-center gap-3 mb-10">
