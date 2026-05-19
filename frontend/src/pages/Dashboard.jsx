@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import DashboardMetrics from '../components/DashboardMetrics';
+import ScanCrop from './ScanCrop';
 import {
   Bell,
   ChevronDown,
@@ -123,7 +125,6 @@ const [loginType, setLoginType] = useState('');
             Here's what's happening in your farm today.
           </p>
         </div>
-
         {/* Right */}
         <div className="flex items-center gap-4 lg:gap-6">
 
@@ -164,7 +165,7 @@ const [loginType, setLoginType] = useState('');
                 <ChevronDown
                   size={18}
                   className={`text-gray-500 transition ${openDropdown ? 'rotate-180' : ''}`}
-                />
+                  />
               </div>
 
               {/* Dropdown Menu */}
@@ -208,6 +209,8 @@ const [loginType, setLoginType] = useState('');
           </h2>
           <p className="text-gray-500">
             Your smart farming analytics and tools will appear here.
+          <DashboardMetrics />
+          <ScanCrop />
           </p>
         </div>
       </div>
