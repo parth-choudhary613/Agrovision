@@ -114,7 +114,7 @@ const [loginType, setLoginType] = useState('');
 
         {/* Left */}
         <div>
-          <h1 className="text-3xl lg:text-5xl font-bold text-black">
+          <h1 className="text-2xl lg:text-5xl font-bold text-black">
             {/* Show first name for Google users, full username for phone users */}
             Welcome back, {loginType === 'phone' ? username : firstName}!👋
           </h1>
@@ -202,7 +202,7 @@ const [loginType, setLoginType] = useState('');
 
       {/* Main Content */}
       <div className="p-6 lg:p-8">
-        <div className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100 min-h-[500px]">
+        <div className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100 min-h-125">
           <h2 className="text-2xl font-bold text-gray-800 mb-3">
             Dashboard Overview
           </h2>

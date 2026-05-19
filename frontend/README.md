@@ -1,16 +1,6 @@
-# React + Vite
+iam working on web app prject called agrovison a ai based agricultural web app it help the farmers to detect the disease. and give them the solution to use this pesticides to cure that disease i complete the authentication part already now the next part is to create a Metric Card Grid or a Dashboard Statistics Row. there are four cards 
+crop scanned , disease found, upcoming event, treatment 
+in 
+1 crop scanned :- basically its that total number of the plants that we sacnned is shown in the card also told the how many plants you scanned mean a number like 6,7 also that image is stored in backend with same person that they are login from i use google auth for login amd use mongodb as database 
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
-
-Currently, two official plugins are available:
-
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
-
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+2. disease found :- 
