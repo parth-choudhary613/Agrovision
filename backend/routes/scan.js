@@ -1,37 +1,54 @@
 // routes/scan.js
 const express = require('express');
 const multer = require('multer');
-const router = express.Router();
+const { analyzeWithKindwise } = require('../utils/kindwise');
 const Scan = require('../models/Scan');
+const protect = require('../middleware/auth');   // ← Added
 
-// Multer setup
-const storage = multer.memoryStorage();
-const upload = multer({ storage });
+const router = express.Router();
 
-router.post('/', upload.single('image'), async (req, res) => {
+// Multer
+const upload = multer({ 
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 }
+});
+
+// Apply protection middleware
+router.post('/', protect, upload.single('image'), async (req, res) => {
   try {
     const userId = req.user.id;
+
+    if (!req.file) {
+      return res.status(400).json({ error: "No image uploaded" });
+    }
+
     const imageBuffer = req.file.buffer;
 
-    // TODO: Call AI API here (Kindwise / OpenAI / etc.)
-    const aiResult = await analyzeCropWithAI(imageBuffer);   // Implement this function
+    const aiResult = await analyzeWithKindwise(imageBuffer);
 
     const scan = await Scan.create({
       userId,
-      cropName: aiResult.cropName || "Unknown",
-      diseaseDetected: aiResult.disease || null,
+      cropName: aiResult.cropName,
+      diseaseDetected: aiResult.disease,
       confidence: aiResult.confidence,
-      imageUrl: aiResult.imageUrl, // After uploading to Cloudinary
+      imageUrl: null,
     });
 
-    res.json({
-      ...scan.toObject(),
-      recommendation: aiResult.recommendation || "Follow standard treatment protocol."
+    res.status(201).json({
+      success: true,
+      cropName: aiResult.cropName,
+      diseaseDetected: aiResult.disease || "Healthy",
+      confidence: Math.round(aiResult.confidence * 100) + "%",
+      recommendation: aiResult.recommendation,
+      scanId: scan._id
     });
 
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Scan failed" });
+    console.error("Scan Error:", error);
+    res.status(500).json({ 
+      success: false, 
+      error: error.message || "Failed to process scan" 
+    });
   }
 });
 

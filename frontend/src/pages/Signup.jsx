@@ -60,28 +60,60 @@ const Signup = () => {
     document.body.appendChild(script);
   }, [navigate]);
 
-  const sendOTP = async () => {
-    if (!username || !phone) return alert("Name and Phone are required");
-    let formattedPhone = phone.trim().replace(/\s+/g, '');
-    if (!formattedPhone.startsWith('+91')) {
-      if (formattedPhone.length === 10) formattedPhone = '+91' + formattedPhone;
-      else return alert("Enter valid Indian phone number");
+const sendOTP = async () => {
+  if (!username || !phone) {
+    return alert("Name and Phone are required");
+  }
+
+  let formattedPhone = phone.trim().replace(/\s+/g, '');
+
+  if (!formattedPhone.startsWith('+91')) {
+    if (formattedPhone.length === 10) {
+      formattedPhone = '+91' + formattedPhone;
+    } else {
+      return alert("Enter valid Indian phone number");
     }
-    setLoading(true);
-    try {
-      if (!window.recaptchaVerifier) {
-        window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', { size: 'invisible' });
+  }
+
+  setLoading(true);
+
+  try {
+    // Clear old verifier
+    if (window.recaptchaVerifier) {
+      window.recaptchaVerifier.clear();
+    }
+
+    // Create fresh verifier
+    window.recaptchaVerifier = new RecaptchaVerifier(
+      auth,
+      'recaptcha-container',
+      {
+        size: 'invisible',
+        callback: () => {
+          console.log("reCAPTCHA solved");
+        },
       }
-      const result = await signInWithPhoneNumber(auth, formattedPhone, window.recaptchaVerifier);
-      setConfirmationResult(result);
-      setPhone(formattedPhone);
-      setStep(2);
-    } catch (err) {
-      alert("Failed to send OTP: " + err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
+    );
+
+    const appVerifier = window.recaptchaVerifier;
+
+    const result = await signInWithPhoneNumber(
+      auth,
+      formattedPhone,
+      appVerifier
+    );
+
+    setConfirmationResult(result);
+    setPhone(formattedPhone);
+    setStep(2);
+
+  } catch (err) {
+    console.log(err);
+    alert("Failed to send OTP: " + err.message);
+  } finally {
+    setLoading(false);
+  }
+};
 
   const verifyOTP = async () => {
     setLoading(true);
@@ -176,7 +208,7 @@ const Signup = () => {
                   onChange={e => setPhone(e.target.value)}
                   className="w-full pl-12 pr-4 py-4 bg-white/5 border border-white/10 rounded-2xl text-white placeholder:text-gray-600 focus:outline-none focus:border-green-500/50 focus:bg-white/10 transition-all"
                 />
-                <div id="recaptcha-container"></div>
+              
               </div>
 
               <motion.button
