@@ -40,7 +40,7 @@ const Dashboard = () => {
         headers: { Authorization: `Bearer ${tok}` },
       })
       .then((r) => {
-        // Update stats if needed
+        // Handle stats update if needed
       })
       .catch(() => {});
   }, [token]);
@@ -69,16 +69,17 @@ const Dashboard = () => {
       });
   }, [navigate, refreshStats]);
 
-  // Close dropdowns on outside click
   useEffect(() => {
     const handler = (e) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) setOpenDropdown(false);
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target))
+        setOpenDropdown(false);
       if (
         scanDropRef.current &&
         !scanDropRef.current.contains(e.target) &&
         scanBtnRef.current &&
         !scanBtnRef.current.contains(e.target)
-      ) setScanDropdown(false);
+      )
+        setScanDropdown(false);
     };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
@@ -96,15 +97,24 @@ const Dashboard = () => {
   const Avatar = ({ size = "md" }) => {
     const cls = size === "sm" ? "w-9 h-9 text-sm" : "w-11 h-11 text-base";
     return picture ? (
-      <img src={picture} alt="profile" referrerPolicy="no-referrer" className={`${cls} rounded-full object-cover border border-gray-200`} />
+      <img
+        src={picture}
+        alt="profile"
+        referrerPolicy="no-referrer"
+        className={`${cls} rounded-full object-cover border border-gray-200 flex-shrink-0`}
+      />
     ) : (
-      <div className={`${cls} rounded-full bg-green-700 text-white flex items-center justify-center font-bold`}>{initial}</div>
+      <div
+        className={`${cls} rounded-full bg-green-700 text-white flex items-center justify-center font-bold flex-shrink-0`}
+      >
+        {initial}
+      </div>
     );
   };
 
   return (
     <div className="min-h-screen bg-[#f5f5f5] lg:ml-72">
-      {/* Navbar */}
+      {/* NAVBAR */}
       <div className="w-full bg-white border-b border-gray-200 px-4 sm:px-6 lg:px-8 py-4 lg:py-5 flex items-center justify-between gap-4 relative z-40">
         <div className="min-w-0">
           <h1 className="text-xl sm:text-2xl lg:text-4xl font-bold text-black truncate">
@@ -116,7 +126,6 @@ const Dashboard = () => {
         </div>
 
         <div className="flex items-center gap-2 sm:gap-3 lg:gap-5 flex-shrink-0">
-          {/* Language, Bell, Profile, Scan Button - same as before */}
           <div className="hidden md:flex items-center gap-2 border border-gray-200 rounded-xl px-3 py-2.5 cursor-pointer hover:bg-gray-50 transition">
             <Languages size={17} className="text-gray-500" />
             <span className="font-medium text-gray-600 text-sm">English</span>
@@ -125,18 +134,26 @@ const Dashboard = () => {
 
           <div className="relative cursor-pointer p-1">
             <Bell size={21} className="text-gray-600" />
-            <div className="absolute -top-1 -right-1 bg-red-500 text-white text-[9px] w-4 h-4 rounded-full flex items-center justify-center font-bold">3</div>
+            <div className="absolute -top-1 -right-1 bg-red-500 text-white text-[9px] w-4 h-4 rounded-full flex items-center justify-center font-bold">
+              3
+            </div>
           </div>
 
           {isLoggedIn && !isSignup && (
             <div className="relative" ref={dropdownRef}>
-              <div onClick={() => setOpenDropdown(!openDropdown)} className="flex items-center gap-2 cursor-pointer hover:bg-gray-100 px-2 py-1.5 rounded-xl transition">
+              <div
+                onClick={() => setOpenDropdown(!openDropdown)}
+                className="flex items-center gap-2 cursor-pointer hover:bg-gray-100 px-2 py-1.5 rounded-xl transition"
+              >
                 <Avatar />
                 <div className="hidden md:block leading-tight">
                   <p className="font-semibold text-gray-800 text-sm">{firstName}</p>
                   <p className="text-xs text-gray-400">Farmer</p>
                 </div>
-                <ChevronDown size={15} className={`text-gray-400 transition ${openDropdown ? "rotate-180" : ""}`} />
+                <ChevronDown
+                  size={15}
+                  className={`text-gray-400 transition ${openDropdown ? "rotate-180" : ""}`}
+                />
               </div>
               {openDropdown && (
                 <div className="absolute right-0 top-14 w-52 bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden z-50">
@@ -147,7 +164,10 @@ const Dashboard = () => {
                       <p className="text-xs text-gray-400">Farmer Account</p>
                     </div>
                   </div>
-                  <button onClick={logout} className="w-full text-left px-4 py-3 text-red-500 hover:bg-red-50 transition text-sm font-medium">
+                  <button
+                    onClick={logout}
+                    className="w-full text-left px-4 py-3 text-red-500 hover:bg-red-50 transition text-sm font-medium"
+                  >
                     Logout
                   </button>
                 </div>
@@ -158,19 +178,20 @@ const Dashboard = () => {
           <div className="relative" ref={scanBtnRef}>
             <button
               onClick={() => setScanDropdown((v) => !v)}
-              className="bg-green-700 hover:bg-green-800 text-white px-5 py-2.5 rounded-2xl flex items-center gap-2 text-sm font-semibold shadow-md transition"
+              className="bg-green-700 hover:bg-green-800 text-white px-4 sm:px-5 py-2.5 rounded-2xl flex items-center gap-2 text-sm font-semibold shadow-md transition"
             >
               <Plus size={17} />
               <span className="hidden sm:block">Scan New Plant</span>
             </button>
-            {/* Dropdown remains the same as before */}
           </div>
         </div>
       </div>
 
-      {/* Main Content */}
-      <div className="p-4 sm:p-6 lg:p-8">
+      {/* MAIN CONTENT - Metrics + Scan Panel Directly Below */}
+      <div className="p-4 sm:p-6 lg:p-8 space-y-8">
         <DashboardMetrics />
+
+        {/* Scan Panel - Placed directly below metrics */}
         <DragandDrop token={token} onScanComplete={handleScanComplete} />
       </div>
 

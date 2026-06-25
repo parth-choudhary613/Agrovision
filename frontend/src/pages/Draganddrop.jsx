@@ -107,7 +107,7 @@ const PlantScanPanel = ({ token, onScanComplete }) => {
     : 0;
 
   return (
-    <div className="max-w-sm mt-10 ">
+    <div className="max-w-4xl">
       {/* Camera */}
       {isCameraOpen && (
         <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden mb-8">
@@ -130,7 +130,7 @@ const PlantScanPanel = ({ token, onScanComplete }) => {
         </div>
       )}
 
-      {/* Drag & Drop Area - Clean Card */}
+      {/* Drag & Drop Area */}
       {!isCameraOpen && !preview && !result && (
         <div
           onDrop={handleDrop}
@@ -189,7 +189,7 @@ const PlantScanPanel = ({ token, onScanComplete }) => {
         </div>
       )}
 
-      {/* RESULT - Matching Your Image Design */}
+      {/* RESULT CARD - Matching Your Image */}
       {result && (
         <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
           <div className="flex justify-between items-center px-6 py-4 border-b">
