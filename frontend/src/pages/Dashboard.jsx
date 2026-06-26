@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
 import DashboardMetrics from "../components/DashboardMetrics";
-import DragandDrop from "../pages/Draganddrop";
+import PlantScanPanel from "../components/PlantScanPanel";
 
 import {
   Bell,
@@ -10,6 +10,7 @@ import {
   Languages,
   Plus,
 } from "lucide-react";
+// import PlantScanPanel from "../components/PlantScanPanel";
 
 const Dashboard = () => {
   const [username, setUsername] = useState("");
@@ -231,7 +232,7 @@ const Dashboard = () => {
 
         {/* Scan Panel */}
         <div ref={scanPanelRef}>
-          <DragandDrop token={token} onScanComplete={handleScanComplete} />
+          <PlantScanPanel token={token} onScanComplete={handleScanComplete} />
         </div>
       </div>
     </div>
