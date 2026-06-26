@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
 import DashboardMetrics from "../components/DashboardMetrics";
-import DragandDrop from "../pages/DragandDrop";
+import DragandDrop from "../pages/Draganddrop";
 
 import {
   Bell,
@@ -18,12 +18,16 @@ const Dashboard = () => {
   const [openDropdown, setOpenDropdown] = useState(false);
   const [loginType, setLoginType] = useState("");
   const [token, setToken] = useState("");
-
-  const [scanDropdown, setScanDropdown] = useState(false);
+  const [stats, setStats] = useState(() => {
+    // Persist stats across refresh per user
+    const saved = localStorage.getItem("agro_stats");
+    return saved
+      ? JSON.parse(saved)
+      : { cropsScanned: 0, diseasesFound: 0, upcomingSprays: 0, treatmentsDone: 0 };
+  });
 
   const dropdownRef = useRef();
-  const scanBtnRef = useRef();
-  const scanDropRef = useRef();
+  const scanPanelRef = useRef(); // ← ref to scroll to scan panel
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -32,18 +36,39 @@ const Dashboard = () => {
   const firstName = username ? username.split(" ")[0] : "";
   const initial = username ? username.charAt(0).toUpperCase() : "?";
 
-  const refreshStats = useCallback((t) => {
-    const tok = t || token;
-    if (!tok) return;
-    axios
-      .get("http://localhost:5000/api/scan/stats", {
-        headers: { Authorization: `Bearer ${tok}` },
-      })
-      .then((r) => {
-        // Handle stats update if needed
-      })
-      .catch(() => {});
-  }, [token]);
+  // Scroll to the scan panel when "Scan New Plant" is clicked
+  const handleScanNewPlant = () => {
+    if (scanPanelRef.current) {
+      scanPanelRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+      // Also trigger the file input inside the panel
+      scanPanelRef.current.dispatchEvent(new CustomEvent("triggerScan", { bubbles: true }));
+    }
+  };
+
+  const refreshStats = useCallback(
+    (t) => {
+      const tok = t || token;
+      if (!tok) return;
+      axios
+        .get("http://localhost:5000/api/scan/stats", {
+          headers: { Authorization: `Bearer ${tok}` },
+        })
+        .then((r) => {
+          if (r.data) {
+            const updated = {
+              cropsScanned: r.data.cropsScanned ?? 0,
+              diseasesFound: r.data.diseasesFound ?? 0,
+              upcomingSprays: r.data.upcomingSprays ?? 0,
+              treatmentsDone: r.data.treatmentsDone ?? 0,
+            };
+            setStats(updated);
+            localStorage.setItem("agro_stats", JSON.stringify(updated));
+          }
+        })
+        .catch(() => {});
+    },
+    [token]
+  );
 
   useEffect(() => {
     const t = localStorage.getItem("token");
@@ -73,13 +98,6 @@ const Dashboard = () => {
     const handler = (e) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target))
         setOpenDropdown(false);
-      if (
-        scanDropRef.current &&
-        !scanDropRef.current.contains(e.target) &&
-        scanBtnRef.current &&
-        !scanBtnRef.current.contains(e.target)
-      )
-        setScanDropdown(false);
     };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
@@ -87,12 +105,32 @@ const Dashboard = () => {
 
   const logout = () => {
     localStorage.removeItem("token");
+    localStorage.removeItem("agro_stats");
+    localStorage.removeItem("agro_last_scan");
     navigate("/");
   };
 
-  const handleScanComplete = useCallback((data) => {
-    refreshStats();
-  }, [refreshStats]);
+  // Called by PlantScanPanel after a successful scan
+  const handleScanComplete = useCallback(
+    (data) => {
+      // Optimistically update metrics immediately
+      setStats((prev) => {
+        const updated = {
+          ...prev,
+          cropsScanned: prev.cropsScanned + 1,
+          diseasesFound:
+            data.diseaseDetected && data.diseaseDetected !== "Healthy"
+              ? prev.diseasesFound + 1
+              : prev.diseasesFound,
+        };
+        localStorage.setItem("agro_stats", JSON.stringify(updated));
+        return updated;
+      });
+      // Then sync with server
+      refreshStats();
+    },
+    [refreshStats]
+  );
 
   const Avatar = ({ size = "md" }) => {
     const cls = size === "sm" ? "w-9 h-9 text-sm" : "w-11 h-11 text-base";
@@ -175,32 +213,27 @@ const Dashboard = () => {
             </div>
           )}
 
-          <div className="relative" ref={scanBtnRef}>
-            <button
-              onClick={() => setScanDropdown((v) => !v)}
-              className="bg-green-700 hover:bg-green-800 text-white px-4 sm:px-5 py-2.5 rounded-2xl flex items-center gap-2 text-sm font-semibold shadow-md transition"
-            >
-              <Plus size={17} />
-              <span className="hidden sm:block">Scan New Plant</span>
-            </button>
-          </div>
+          {/* ✅ FIXED: Scan New Plant button now scrolls + triggers scan panel */}
+          <button
+            onClick={handleScanNewPlant}
+            className="bg-green-700 hover:bg-green-800 text-white px-4 sm:px-5 py-2.5 rounded-2xl flex items-center gap-2 text-sm font-semibold shadow-md transition"
+          >
+            <Plus size={17} />
+            <span className="hidden sm:block">Scan New Plant</span>
+          </button>
         </div>
       </div>
 
-      {/* MAIN CONTENT - Metrics + Scan Panel Directly Below */}
+      {/* MAIN CONTENT */}
       <div className="p-4 sm:p-6 lg:p-8 space-y-8">
-        <DashboardMetrics />
+        {/* Metrics — receives live stats */}
+        <DashboardMetrics stats={stats} />
 
-        {/* Scan Panel - Placed directly below metrics */}
-        <DragandDrop token={token} onScanComplete={handleScanComplete} />
+        {/* Scan Panel */}
+        <div ref={scanPanelRef}>
+          <DragandDrop token={token} onScanComplete={handleScanComplete} />
+        </div>
       </div>
-
-      <style>{`
-        @keyframes fadeDown {
-          from { opacity: 0; transform: translateY(-8px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-      `}</style>
     </div>
   );
 };
