@@ -1,92 +1,88 @@
-// routes/scan.js
-const express  = require('express');
-const multer   = require('multer');
-const { analyzeWithKindwise } = require('../utils/kindwise');
-const Scan     = require('../models/Scan');
-const protect  = require('../middleware/auth');
-
+// backend/routes/scan.js
+const express = require('express');
 const router = express.Router();
+const multer = require('multer');
+const Scan = require('../models/Scan');
+const { analyzeWithKindwise } = require('../utils/kindwise');
 
-const upload = multer({
-  storage: multer.memoryStorage(),
-  limits:  { fileSize: 5 * 1024 * 1024 },
-});
+// Import protect correctly
+const protect = require('../middleware/auth');   // ← Fixed: Not destructuring
 
-// ── POST /api/scan ────────────────────────────────────────────────────────────
-router.post('/', protect, upload.single('image'), async (req, res) => {
-  try {
-    const userId = req.user.id;
-    if (!req.file) return res.status(400).json({ error: 'No image uploaded' });
-
-    const ai = await analyzeWithKindwise(req.file.buffer);
-
-    const scan = await Scan.create({
-      userId,
-      cropName:        ai.cropName,
-      diseaseDetected: ai.disease || 'Healthy',
-      confidence:      ai.confidence,
-      pesticide:       ai.pesticide,
-      dosage:          ai.dosage,
-      sprayInterval:   ai.sprayInterval,
-      recommendation:  ai.recommendation,
-      isHealthy:       ai.isHealthy,
-      imageUrl:        null,
-    });
-
-    // ✅ Return ALL fields the frontend needs — nothing hardcoded
-    res.status(201).json({
-      success:         true,
-      scanId:          scan._id,
-      cropName:        ai.cropName,
-      diseaseDetected: ai.disease || 'Healthy',
-      confidence:      ai.confidence,        // 0–1 float
-      isHealthy:       ai.isHealthy,
-      pesticide:       ai.pesticide,         // e.g. "Mancozeb 75% WP"
-      dosage:          ai.dosage,            // e.g. "2.5 g per litre of water"
-      sprayInterval:   ai.sprayInterval,     // e.g. "Every 7 days"
-      recommendation:  ai.recommendation,
-    });
-
-  } catch (error) {
-    console.error('Scan Error:', error);
-    res.status(500).json({ success: false, error: error.message || 'Failed to process scan' });
+// Multer setup
+const storage = multer.memoryStorage();
+const upload = multer({ 
+  storage: storage,
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype.startsWith('image/')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only images allowed!'), false);
+    }
   }
 });
 
-// ── GET /api/scan/stats ───────────────────────────────────────────────────────
-// ✅ Fixed: field names now match what Dashboard.jsx expects
-router.get('/stats', protect, async (req, res) => {
+// POST /api/scan
+router.post('/', protect, upload.single('image'), async (req, res) => {
   try {
-    const userId = req.user.id;
+    if (!req.file) {
+      return res.status(400).json({ success: false, error: 'No image uploaded' });
+    }
 
-    const cropsScanned = await Scan.countDocuments({ userId });
+    const aiResult = await analyzeWithKindwise(req.file.buffer);
 
-    const diseasesFound = await Scan.countDocuments({
-      userId,
-      isHealthy: false,
-      diseaseDetected: { $exists: true, $nin: [null, '', 'Healthy'] },
+    // Reject non-plant images
+    if (aiResult.cropName === "Unknown Crop" || aiResult.confidence < 0.08) {
+      return res.status(400).json({
+        success: false,
+        error: "Not a valid plant image. Please upload a clear leaf photo."
+      });
+    }
+
+    const scan = new Scan({
+      userId: req.user.id,
+      cropName: aiResult.cropName,
+      imageUrl: "",
+      diseaseDetected: aiResult.diseaseDetected,
+      confidence: aiResult.confidence,
+      pesticide: aiResult.pesticide,
+      dosage: aiResult.dosage,
+      sprayInterval: aiResult.sprayInterval,
+      recommendation: aiResult.recommendation,
+      isHealthy: aiResult.isHealthy,
     });
 
-    // Upcoming sprays = scans with a sprayInterval in the last 30 days
-    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-    const upcomingSprays = await Scan.countDocuments({
-      userId,
-      isHealthy:     false,
-      sprayInterval: { $exists: true, $ne: null },
-      scannedAt:     { $gte: thirtyDaysAgo },
-    });
+    await scan.save();
 
-    // Treatments done = all scans where a pesticide was recommended
-    const treatmentsDone = await Scan.countDocuments({
-      userId,
-      pesticide: { $exists: true, $ne: null },
+    res.json({
+      success: true,
+      ...aiResult,
+      scanId: scan._id
     });
-
-    res.json({ cropsScanned, diseasesFound, upcomingSprays, treatmentsDone });
 
   } catch (error) {
-    console.error('Stats Error:', error);
-    res.status(500).json({ message: 'Failed to fetch stats' });
+    console.error("Scan Error:", error);
+    res.status(500).json({ 
+      success: false, 
+      error: error.message || "Server error during scan" 
+    });
+  }
+});
+
+// GET stats
+router.get('/stats', protect, async (req, res) => {
+  try {
+    const total = await Scan.countDocuments({ userId: req.user.id });
+    const diseased = await Scan.countDocuments({ userId: req.user.id, isHealthy: false });
+
+    res.json({
+      cropsScanned: total,
+      diseasesFound: diseased,
+      upcomingSprays: 0,
+      treatmentsDone: 0
+    });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to load stats" });
   }
 });
 
