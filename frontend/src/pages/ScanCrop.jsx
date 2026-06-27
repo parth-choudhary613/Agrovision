@@ -3,23 +3,21 @@ import React, { useState, useRef, forwardRef, useImperativeHandle } from 'react'
 // ScanCrop accepts a ref so Dashboard can call .openScanner() from the button
 const ScanCrop = forwardRef((props, ref) => {
   const [selectedImage, setSelectedImage] = useState(null);
-  const [preview, setPreview] = useState(null);
-  const [result, setResult] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [isCameraOpen, setIsCameraOpen] = useState(false);
-  const [scannerOpen, setScannerOpen] = useState(false);
-  const [stream, setStream] = useState(null);
+  const [preview, setPreview]             = useState(null);
+  const [result, setResult]               = useState(null);
+  const [loading, setLoading]             = useState(false);
+  const [isCameraOpen, setIsCameraOpen]   = useState(false);
+  const [scannerOpen, setScannerOpen]     = useState(false);
+  const [stream, setStream]               = useState(null);
 
   const fileInputRef = useRef(null);
-  const videoRef = useRef(null);
-  const canvasRef = useRef(null);
-  const scannerRef = useRef(null);
+  const videoRef     = useRef(null);
+  const canvasRef    = useRef(null);
+  const scannerRef   = useRef(null);
 
-  // Expose openScanner() to parent (Dashboard button)
   useImperativeHandle(ref, () => ({
     openScanner() {
       setScannerOpen(true);
-      // Scroll to scanner section smoothly
       setTimeout(() => {
         scannerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }, 50);
@@ -64,8 +62,8 @@ const ScanCrop = forwardRef((props, ref) => {
   const capturePhoto = () => {
     if (videoRef.current && canvasRef.current) {
       const canvas = canvasRef.current;
-      const video = videoRef.current;
-      canvas.width = video.videoWidth;
+      const video  = videoRef.current;
+      canvas.width  = video.videoWidth;
       canvas.height = video.videoHeight;
       canvas.getContext('2d').drawImage(video, 0, 0);
       canvas.toBlob((blob) => {
@@ -92,16 +90,17 @@ const ScanCrop = forwardRef((props, ref) => {
     formData.append('image', selectedImage);
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch('http://localhost:5000/api/scan', {
+      const res  = await fetch('http://localhost:5000/api/scan', {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
         body: formData,
       });
       const data = await res.json();
+      if (!data.success) throw new Error(data.error || 'Scan failed');
       setResult(data);
     } catch (err) {
       console.error(err);
-      alert('Failed to scan crop. Please try again.');
+      alert(err.message || 'Failed to scan crop. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -115,14 +114,16 @@ const ScanCrop = forwardRef((props, ref) => {
     closeCamera();
   };
 
-  // Confidence as number 0–100
-  const confidencePct = result?.confidence
-    ? typeof result.confidence === 'string'
-      ? result.confidence
-      : (result.confidence * 100).toFixed(1) + '%'
-    : null;
-
+  // ── Derived display values ───────────────────────────────────────────────────
   const isHealthy = result && (!result.diseaseDetected || result.diseaseDetected === 'Healthy');
+
+  // BUG FIX #4: Backend returns confidence as 0–100 integer (e.g. 87).
+  // Old code did `(result.confidence * 100)` which turned 87 → 8700%.
+  // Fix: treat values > 1 as already a percentage; only multiply if it's a 0–1 fraction.
+  const confidenceNum = result?.confidence != null
+    ? (result.confidence <= 1 ? Math.round(result.confidence * 100) : result.confidence)
+    : 0;
+  const confidencePct = confidenceNum > 0 ? `${confidenceNum}%` : null;
 
   return (
     <div ref={scannerRef} className="mt-8">
@@ -170,7 +171,7 @@ const ScanCrop = forwardRef((props, ref) => {
               </div>
             )}
 
-            {/* Preview of selected image */}
+            {/* Preview */}
             {preview && !isCameraOpen && (
               <div className="mb-6 flex justify-center">
                 <div className="relative">
@@ -189,7 +190,7 @@ const ScanCrop = forwardRef((props, ref) => {
               </div>
             )}
 
-            {/* Upload / Camera buttons */}
+            {/* Drop zone */}
             {!isCameraOpen && !preview && (
               <div
                 onDrop={handleDrop}
@@ -262,7 +263,9 @@ const ScanCrop = forwardRef((props, ref) => {
           {/* Result header */}
           <div
             className={`px-6 py-5 flex items-center justify-between ${
-              isHealthy ? 'bg-emerald-50 border-b border-emerald-100' : 'bg-orange-50 border-b border-orange-100'
+              isHealthy
+                ? 'bg-emerald-50 border-b border-emerald-100'
+                : 'bg-orange-50 border-b border-orange-100'
             }`}
           >
             <div className="flex items-center gap-3">
@@ -282,10 +285,10 @@ const ScanCrop = forwardRef((props, ref) => {
             </button>
           </div>
 
-          {/* Result body: LEFT = details, RIGHT = image */}
+          {/* Result body */}
           <div className="flex flex-col lg:flex-row">
 
-            {/* ── Left: Result Details ─────────────────────────────────────── */}
+            {/* ── Left: Details ────────────────────────────────────────────── */}
             <div className="flex-1 p-6 lg:p-8 space-y-5 order-2 lg:order-1">
 
               {/* Crop name */}
@@ -307,13 +310,19 @@ const ScanCrop = forwardRef((props, ref) => {
                   <p className={`text-xl font-bold mt-0.5 ${isHealthy ? 'text-emerald-600' : 'text-red-600'}`}>
                     {result.diseaseDetected || 'Healthy'}
                   </p>
+                  {/* Disease description from API */}
+                  {result.diseaseDescription && !isHealthy && (
+                    <p className="text-sm text-gray-500 mt-1 leading-relaxed">
+                      {result.diseaseDescription}
+                    </p>
+                  )}
                 </div>
               </div>
 
               <div className="border-t border-gray-100" />
 
-              {/* Confidence bar */}
-              {confidencePct && (
+              {/* Confidence bar — BUG FIX #4: use corrected confidenceNum (0–100) */}
+              {confidenceNum > 0 && (
                 <div>
                   <div className="flex items-center justify-between mb-2">
                     <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Confidence</p>
@@ -324,11 +333,7 @@ const ScanCrop = forwardRef((props, ref) => {
                       className={`h-full rounded-full transition-all duration-700 ${
                         isHealthy ? 'bg-emerald-500' : 'bg-orange-500'
                       }`}
-                      style={{
-                        width: typeof result.confidence === 'number'
-                          ? `${(result.confidence * 100).toFixed(0)}%`
-                          : result.confidence,
-                      }}
+                      style={{ width: `${confidenceNum}%` }}
                     />
                   </div>
                 </div>
@@ -336,7 +341,7 @@ const ScanCrop = forwardRef((props, ref) => {
 
               <div className="border-t border-gray-100" />
 
-              {/* Recommendation */}
+              {/* Chemical treatment */}
               {result.recommendation && (
                 <div className="flex items-start gap-3">
                   <span className="text-2xl mt-0.5">💊</span>
@@ -344,11 +349,47 @@ const ScanCrop = forwardRef((props, ref) => {
                     <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5">
                       Recommended Treatment
                     </p>
-                    <p className="text-gray-600 leading-relaxed text-sm lg:text-base">
+                    <p className="text-gray-700 leading-relaxed text-sm lg:text-base font-medium">
                       {result.recommendation}
                     </p>
                   </div>
                 </div>
+              )}
+
+              {/* Biological treatment (if available from API) */}
+              {result.biologicalTreatment && !isHealthy && (
+                <>
+                  <div className="border-t border-gray-100" />
+                  <div className="flex items-start gap-3">
+                    <span className="text-2xl mt-0.5">🌿</span>
+                    <div>
+                      <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5">
+                        Biological Treatment
+                      </p>
+                      <p className="text-gray-600 leading-relaxed text-sm">
+                        {result.biologicalTreatment}
+                      </p>
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {/* Prevention (if available from API) */}
+              {result.prevention && !isHealthy && (
+                <>
+                  <div className="border-t border-gray-100" />
+                  <div className="flex items-start gap-3">
+                    <span className="text-2xl mt-0.5">🛡️</span>
+                    <div>
+                      <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5">
+                        Prevention
+                      </p>
+                      <p className="text-gray-600 leading-relaxed text-sm">
+                        {result.prevention}
+                      </p>
+                    </div>
+                  </div>
+                </>
               )}
 
               {/* Scan another */}
