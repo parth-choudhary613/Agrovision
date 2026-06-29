@@ -15,6 +15,7 @@ app.use(express.json());
 // Routes
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/scan', require('./routes/scan'));        // ← Added
+app.use('/api/treatment', require('./routes/treatment')); // ← Spray scheduling + upcoming sprays
 // app.use('/api/dashboard', require('./routes/dashboard'));  // You can add later
 
 // Test Route
