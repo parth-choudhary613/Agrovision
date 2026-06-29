@@ -1,10 +1,12 @@
 // components/PlantScanPanel.jsx
 import { useState, useRef, useEffect, useCallback } from "react";
-import { Upload, Camera, X, Leaf, AlertTriangle, CheckCircle, Calendar } from "lucide-react";
+import { Upload, Camera, X, Leaf, AlertTriangle, CheckCircle, Calendar, FileText } from "lucide-react";
+import ScanDetailsModal from "./ScanDetailsModal";
+import ScheduleCalendarModal from "./ScheduleCalendarModal";
 
 const STORAGE_KEY = "agro_last_scan";
 
-const PlantScanPanel = ({ token, onScanComplete }) => {
+const PlantScanPanel = ({ token, onScanComplete, onSprayScheduled }) => {
   const [preview, setPreview] = useState(() => {
     try { return JSON.parse(localStorage.getItem(STORAGE_KEY))?.preview || null; } catch { return null; }
   });
@@ -17,6 +19,9 @@ const PlantScanPanel = ({ token, onScanComplete }) => {
   const [scanning, setScanning]     = useState(false);
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [stream, setStream]         = useState(null);
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [showScheduleModal, setShowScheduleModal] = useState(false);
+  const [scheduleConfirmed, setScheduleConfirmed] = useState(false);
 
   const fileInputRef = useRef();
   const videoRef     = useRef();
@@ -42,6 +47,7 @@ const PlantScanPanel = ({ token, onScanComplete }) => {
     setSelectedFile(file);
     setPreview(URL.createObjectURL(file));
     setResult(null);
+    setScheduleConfirmed(false);
     localStorage.removeItem(STORAGE_KEY);
   };
 
@@ -110,6 +116,9 @@ const PlantScanPanel = ({ token, onScanComplete }) => {
     setPreview(null);
     setSelectedFile(null);
     setResult(null);
+    setShowDetailsModal(false);
+    setShowScheduleModal(false);
+    setScheduleConfirmed(false);
     persist(null, null);
     closeCamera();
   };
@@ -126,6 +135,7 @@ const PlantScanPanel = ({ token, onScanComplete }) => {
   const dosage         = result?.dosage         || null;
   const sprayInterval  = result?.sprayInterval  || null;
   const recommendation = result?.recommendation || null;
+  const hasDetails     = !!(result?.diseaseDescription || result?.prevention || result?.howToUse || result?.biologicalTreatment);
 
   return (
     <div data-scan-panel className="w-full">
@@ -309,13 +319,30 @@ const PlantScanPanel = ({ token, onScanComplete }) => {
                 </div>
               )}
 
+              {/* Schedule confirmation banner */}
+              {scheduleConfirmed && (
+                <div className="bg-green-50 border border-green-100 rounded-2xl p-3 flex items-center gap-2">
+                  <CheckCircle size={16} className="text-green-600 flex-shrink-0" />
+                  <p className="text-sm text-green-700 font-medium">
+                    Spray schedule saved! Check "Upcoming Spray Reminders" on your dashboard.
+                  </p>
+                </div>
+              )}
+
               {/* Actions */}
               <div className="flex gap-3 pt-2">
-                <button className="flex-1 border border-gray-300 py-3 rounded-2xl text-sm font-medium hover:bg-gray-50 transition">
-                  View Details
+                <button
+                  onClick={() => setShowDetailsModal(true)}
+                  disabled={!hasDetails}
+                  className="flex-1 border border-gray-300 py-3 rounded-2xl text-sm font-medium hover:bg-gray-50 transition flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <FileText size={16} /> View Details
                 </button>
                 {!isHealthy && (
-                  <button className="flex-1 bg-green-700 hover:bg-green-800 text-white py-3 rounded-2xl text-sm font-medium flex items-center justify-center gap-2 transition">
+                  <button
+                    onClick={() => setShowScheduleModal(true)}
+                    className="flex-1 bg-green-700 hover:bg-green-800 text-white py-3 rounded-2xl text-sm font-medium flex items-center justify-center gap-2 transition"
+                  >
                     <Calendar size={16} /> Add to Schedule
                   </button>
                 )}
@@ -327,6 +354,25 @@ const PlantScanPanel = ({ token, onScanComplete }) => {
 
       <input ref={fileInputRef} type="file" accept="image/*" className="hidden"
         onChange={(e) => loadFile(e.target.files[0])} />
+
+      {/* ── View Details modal ── */}
+      {showDetailsModal && (
+        <ScanDetailsModal result={result} onClose={() => setShowDetailsModal(false)} />
+      )}
+
+      {/* ── Add to Schedule modal ── */}
+      {showScheduleModal && (
+        <ScheduleCalendarModal
+          result={result}
+          scanId={result?.scanId}
+          token={token}
+          onClose={() => setShowScheduleModal(false)}
+          onScheduled={(treatment) => {
+            setScheduleConfirmed(true);
+            if (onSprayScheduled) onSprayScheduled(treatment);
+          }}
+        />
+      )}
     </div>
   );
 };
