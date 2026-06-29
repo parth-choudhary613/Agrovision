@@ -2,7 +2,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Upload, Camera, X, Leaf, AlertTriangle, CheckCircle, Calendar, FileText } from "lucide-react";
 import ScanDetailsModal from "./ScanDetailsModal";
-import ScheduleCalendarModal from "./ScheduleCalendarModal";
+import ScheduleCalendarModal from "./ScheduleCalenderModal";
 
 const STORAGE_KEY = "agro_last_scan";
 

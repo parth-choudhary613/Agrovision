@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
 import DashboardMetrics from "../components/DashboardMetrics";
 import PlantScanPanel from "../components/PlantScanPanel";
+import UpcomingSpraysCard from "../components/UpcomingSpraysCard";
 
 import {
   Bell,
@@ -29,6 +30,7 @@ const Dashboard = () => {
 
   const dropdownRef = useRef();
   const scanPanelRef = useRef(); // ← ref to scroll to scan panel
+  const [sprayRefreshKey, setSprayRefreshKey] = useState(0);
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -133,6 +135,12 @@ const Dashboard = () => {
     [refreshStats]
   );
 
+  // Called by PlantScanPanel after the user confirms a spray schedule
+  const handleSprayScheduled = useCallback(() => {
+    setSprayRefreshKey((k) => k + 1); // tells UpcomingSpraysCard to refetch
+    refreshStats(); // upcomingSprays / treatmentsDone counts may have changed
+  }, [refreshStats]);
+
   const Avatar = ({ size = "md" }) => {
     const cls = size === "sm" ? "w-9 h-9 text-sm" : "w-11 h-11 text-base";
     return picture ? (
@@ -230,9 +238,16 @@ const Dashboard = () => {
         {/* Metrics — receives live stats */}
         <DashboardMetrics stats={stats} />
 
+        {/* Upcoming Spray Reminders */}
+        <UpcomingSpraysCard token={token} refreshKey={sprayRefreshKey} />
+
         {/* Scan Panel */}
         <div ref={scanPanelRef}>
-          <PlantScanPanel token={token} onScanComplete={handleScanComplete} />
+          <PlantScanPanel
+            token={token}
+            onScanComplete={handleScanComplete}
+            onSprayScheduled={handleSprayScheduled}
+          />
         </div>
       </div>
     </div>
