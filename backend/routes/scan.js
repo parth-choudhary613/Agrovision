@@ -1,10 +1,11 @@
 // backend/routes/scan.js
-const express = require('express');
-const router  = express.Router();
-const multer  = require('multer');
-const Scan    = require('../models/Scan');
+const express    = require('express');
+const router     = express.Router();
+const multer     = require('multer');
+const Scan       = require('../models/Scan');
+const Treatment  = require('../models/Treatment');
 const { analyzeWithKindwise } = require('../utils/kindwise');
-const protect = require('../middleware/auth');
+const protect    = require('../middleware/auth');
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -68,9 +69,34 @@ router.post('/', protect, upload.single('image'), async (req, res) => {
 // GET /api/scan/stats
 router.get('/stats', protect, async (req, res) => {
   try {
-    const total    = await Scan.countDocuments({ userId: req.user.id });
-    const diseased = await Scan.countDocuments({ userId: req.user.id, isHealthy: false });
-    res.json({ cropsScanned: total, diseasesFound: diseased, upcomingSprays: 0, treatmentsDone: 0 });
+    const userId = req.user.id;
+    const today  = new Date();
+    today.setHours(0, 0, 0, 0);
+    const sevenDaysOut = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000);
+
+    const [total, diseased, treatments] = await Promise.all([
+      Scan.countDocuments({ userId }),
+      Scan.countDocuments({ userId, isHealthy: false }),
+      Treatment.find({ userId }).lean(),
+    ]);
+
+    let upcomingSprays = 0;
+    let treatmentsDone = 0;
+
+    for (const t of treatments) {
+      for (const spray of t.spraySchedule || []) {
+        if (spray.status === 'done') {
+          treatmentsDone += 1;
+        } else if (spray.status === 'pending') {
+          const sprayDate = new Date(spray.date);
+          if (sprayDate >= today && sprayDate <= sevenDaysOut) {
+            upcomingSprays += 1;
+          }
+        }
+      }
+    }
+
+    res.json({ cropsScanned: total, diseasesFound: diseased, upcomingSprays, treatmentsDone });
   } catch (err) {
     res.status(500).json({ error: 'Failed to load stats' });
   }
