@@ -1,12 +1,12 @@
 // components/PlantScanPanel.jsx
 import { useState, useRef, useEffect, useCallback } from "react";
-import { Upload, Camera, X, Leaf, AlertTriangle, CheckCircle, Calendar, FileText } from "lucide-react";
+import { Upload, Camera, X, Leaf, AlertTriangle, CheckCircle, Calendar, FileText, RotateCcw, ShieldCheck } from "lucide-react";
 import ScanDetailsModal from "./ScanDetailsModal";
 import ScheduleCalendarModal from "./ScheduleCalenderModal";
 
 const STORAGE_KEY = "agro_last_scan";
 
-const PlantScanPanel = ({ token, onScanComplete, onSprayScheduled }) => {
+const PlantScanPanel = ({ token, onScanComplete, onSprayScheduled, onResultStateChange, onTreatmentDone }) => {
   const [preview, setPreview] = useState(() => {
     try { return JSON.parse(localStorage.getItem(STORAGE_KEY))?.preview || null; } catch { return null; }
   });
@@ -41,6 +41,12 @@ const PlantScanPanel = ({ token, onScanComplete, onSprayScheduled }) => {
     window.addEventListener("triggerScan", handler);
     return () => window.removeEventListener("triggerScan", handler);
   }, [result]);
+
+  // Tell the dashboard whether a diagnosis result is showing, so it can
+  // switch to the side-by-side "diagnosis + upcoming sprays" layout.
+  useEffect(() => {
+    if (onResultStateChange) onResultStateChange(!!result);
+  }, [result, onResultStateChange]);
 
   const loadFile = (file) => {
     if (!file || !file.type.startsWith("image/")) return;
@@ -112,6 +118,17 @@ const PlantScanPanel = ({ token, onScanComplete, onSprayScheduled }) => {
     }
   };
 
+  // Mark the current diagnosis's treatment as done.
+  // Guarded + persisted so re-clicking (or a page refresh) can never
+  // double-count the same scan into the "Treatments Done" metric.
+  const handleTreatmentDone = () => {
+    if (!result || result.treatmentDoneMarked) return;
+    const updated = { ...result, treatmentDoneMarked: true };
+    setResult(updated);
+    persist(preview, updated);
+    if (onTreatmentDone) onTreatmentDone();
+  };
+
   const resetScan = () => {
     setPreview(null);
     setSelectedFile(null);
@@ -136,6 +153,7 @@ const PlantScanPanel = ({ token, onScanComplete, onSprayScheduled }) => {
   const sprayInterval  = result?.sprayInterval  || null;
   const recommendation = result?.recommendation || null;
   const hasDetails     = !!(result?.diseaseDescription || result?.prevention || result?.howToUse || result?.biologicalTreatment);
+  const isTreatmentDone = !!result?.treatmentDoneMarked;
 
   return (
     <div data-scan-panel className="w-full">
@@ -225,7 +243,7 @@ const PlantScanPanel = ({ token, onScanComplete, onSprayScheduled }) => {
 
       {/* ── RESULT: diagnosis card with REAL API data ── */}
       {result && (
-        <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden max-w-3xl">
+        <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden w-full">
           <div className="flex justify-between items-center px-6 py-4 border-b">
             <h2 className="text-lg font-bold text-gray-900">Recent Diagnosis</h2>
             <button onClick={resetScan} className="text-green-700 text-sm font-medium hover:underline">
@@ -346,6 +364,26 @@ const PlantScanPanel = ({ token, onScanComplete, onSprayScheduled }) => {
                     <Calendar size={16} /> Add to Schedule
                   </button>
                 )}
+              </div>
+
+              {/* Add More / Treatment Done */}
+              <div className="flex gap-3">
+                <button
+                  onClick={resetScan}
+                  className="flex-1 border border-gray-300 py-3 rounded-2xl text-sm font-medium hover:bg-gray-50 transition flex items-center justify-center gap-2"
+                >
+                  <RotateCcw size={16} /> Add More
+                </button>
+                <button
+                  onClick={handleTreatmentDone}
+                  disabled={isTreatmentDone}
+                  className={`flex-1 py-3 rounded-2xl text-sm font-medium flex items-center justify-center gap-2 transition
+                    ${isTreatmentDone
+                      ? "bg-purple-50 text-purple-600 cursor-not-allowed"
+                      : "bg-purple-600 hover:bg-purple-700 text-white"}`}
+                >
+                  <ShieldCheck size={16} /> {isTreatmentDone ? "Treatment Done ✓" : "Treatment Done"}
+                </button>
               </div>
             </div>
           </div>
