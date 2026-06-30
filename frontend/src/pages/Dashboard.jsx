@@ -31,7 +31,6 @@ const Dashboard = () => {
   const dropdownRef = useRef();
   const scanPanelRef = useRef(); // ← ref to scroll to scan panel
   const [sprayRefreshKey, setSprayRefreshKey] = useState(0);
-  const [hasResult, setHasResult] = useState(false);
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -142,10 +141,11 @@ const Dashboard = () => {
     refreshStats(); // upcomingSprays / treatmentsDone counts may have changed
   }, [refreshStats]);
 
-  // Called by PlantScanPanel when the user marks a diagnosis's treatment as done.
-  // PlantScanPanel already guards against firing this twice for the same scan
-  // (it persists a `treatmentDoneMarked` flag on the result), so here we just
-  // bump the metric by exactly one and persist the new total.
+  // Called by UpcomingSpraysCard when the user marks a specific scheduled
+  // spray as done. UpcomingSpraysCard already calls the backend PATCH
+  // endpoint to flip that spray's status to "done" (so it can never be
+  // marked twice) before calling this — here we just bump the metric by
+  // exactly one and persist the new total.
   const handleTreatmentDone = useCallback(() => {
     setStats((prev) => {
       const updated = { ...prev, treatmentsDone: prev.treatmentsDone + 1 };
@@ -251,37 +251,23 @@ const Dashboard = () => {
         {/* Metrics — receives live stats */}
         <DashboardMetrics stats={stats} />
 
-        {hasResult ? (
-          /* Diagnosis card (left, wider) + Upcoming Spray Reminders (right) */
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-            <div ref={scanPanelRef} className="lg:col-span-2">
-              <PlantScanPanel
-                token={token}
-                onScanComplete={handleScanComplete}
-                onSprayScheduled={handleSprayScheduled}
-                onResultStateChange={setHasResult}
-                onTreatmentDone={handleTreatmentDone}
-              />
-            </div>
-            <div className="lg:col-span-1">
-              <UpcomingSpraysCard token={token} refreshKey={sprayRefreshKey} />
-            </div>
+        {/* Scan panel (left, wider) + Upcoming Spray Reminders (right) — always side by side */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+          <div ref={scanPanelRef} className="lg:col-span-2">
+            <PlantScanPanel
+              token={token}
+              onScanComplete={handleScanComplete}
+              onSprayScheduled={handleSprayScheduled}
+            />
           </div>
-        ) : (
-          /* No active diagnosis yet — reminders full width above the scan panel */
-          <>
-            <UpcomingSpraysCard token={token} refreshKey={sprayRefreshKey} />
-            <div ref={scanPanelRef}>
-              <PlantScanPanel
-                token={token}
-                onScanComplete={handleScanComplete}
-                onSprayScheduled={handleSprayScheduled}
-                onResultStateChange={setHasResult}
-                onTreatmentDone={handleTreatmentDone}
-              />
-            </div>
-          </>
-        )}
+          <div className="lg:col-span-1">
+            <UpcomingSpraysCard
+              token={token}
+              refreshKey={sprayRefreshKey}
+              onTreatmentDone={handleTreatmentDone}
+            />
+          </div>
+        </div>
       </div>
     </div>
   );
