@@ -141,24 +141,35 @@ function isHourSafe(hour) {
 }
 
 /**
- * Search the hourly forecast for the first continuous 2-hour block where
- * every hour is "safe" (see isHourSafe). Returns a human-friendly label
+ * Search the hourly (or 3-hour, when running on the fallback data source)
+ * forecast for the first continuous block of at least `windowSizeHours`
+ * that is entirely "safe" (see isHourSafe). Returns a human-friendly label
  * such as "Tomorrow 6:00 AM - 8:00 AM", or null if no such window exists
- * within the provided forecast (typically the next 48 hours).
+ * within the provided forecast horizon.
  *
- * @param {Array} hourly - array of normalised hourly entries (see weatherService)
+ * @param {Array} hourly - array of normalised forecast entries (see weatherService)
  * @param {number} timezoneOffsetSeconds - location's UTC offset, from OWM
- * @param {number} windowSizeHours - length of the required safe window (default 2)
+ * @param {number} windowSizeHours - minimum length of the required safe window (default 2)
+ * @param {number} stepSeconds - seconds between consecutive `hourly` entries
+ *                                (3600 for true hourly data, 10800 for the
+ *                                free-tier 3-hour fallback forecast)
  */
-function findBestSprayWindow(hourly, timezoneOffsetSeconds = 0, windowSizeHours = 2) {
-  if (!Array.isArray(hourly) || hourly.length < windowSizeHours) return null;
+function findBestSprayWindow(hourly, timezoneOffsetSeconds = 0, windowSizeHours = 2, stepSeconds = 3600) {
+  if (!Array.isArray(hourly) || hourly.length === 0) return null;
 
-  for (let i = 0; i <= hourly.length - windowSizeHours; i++) {
-    const slice = hourly.slice(i, i + windowSizeHours);
+  // How many consecutive entries are needed to cover at least windowSizeHours,
+  // given the actual spacing between entries. E.g. windowSizeHours=2 with
+  // hourly (3600s) data → 2 slots. windowSizeHours=2 with 3-hour (10800s)
+  // fallback data → 1 slot already covers 3 hours, which is >= 2 hours.
+  const slots = Math.max(1, Math.ceil((windowSizeHours * 3600) / stepSeconds));
+  if (hourly.length < slots) return null;
+
+  for (let i = 0; i <= hourly.length - slots; i++) {
+    const slice = hourly.slice(i, i + slots);
     if (slice.every(isHourSafe)) {
-      const start = slice[0];
-      const end = slice[slice.length - 1];
-      return formatWindowLabel(start.dt, end.dt, timezoneOffsetSeconds, windowSizeHours);
+      const startUnix = slice[0].dt;
+      const endUnix = startUnix + slots * stepSeconds;
+      return formatWindowLabel(startUnix, endUnix, timezoneOffsetSeconds);
     }
   }
   return null; // No safe window found in the available forecast horizon
@@ -169,9 +180,8 @@ function findBestSprayWindow(hourly, timezoneOffsetSeconds = 0, windowSizeHours 
  * "Tomorrow 6:00 AM - 8:00 AM", using the location's own timezone offset
  * (not the server's timezone) so the label is meaningful to the farmer.
  */
-function formatWindowLabel(startUnix, endUnixOfLastHour, timezoneOffsetSeconds, windowSizeHours) {
+function formatWindowLabel(startUnix, endUnix, timezoneOffsetSeconds) {
   const MS = 1000;
-  const HOUR_MS = 3600 * MS;
 
   // Shift "now" and the target times into the location's local time by
   // applying the timezone offset, then reading UTC getters on the shifted
@@ -180,8 +190,7 @@ function formatWindowLabel(startUnix, endUnixOfLastHour, timezoneOffsetSeconds, 
 
   const nowLocal = toLocal(Math.floor(Date.now() / MS));
   const startLocal = toLocal(startUnix);
-  // The window's end display time = start of the last hourly slot + 1 hour
-  const endLocal = new Date(toLocal(endUnixOfLastHour).getTime() + HOUR_MS);
+  const endLocal = toLocal(endUnix);
 
   const dayLabel = getRelativeDayLabel(nowLocal, startLocal);
   const startTime = formatHour(startLocal);
@@ -219,7 +228,7 @@ function formatHour(dateUtcShifted) {
  * @returns {{sprayScore:number, recommendation:Object, reasons:Array, bestSprayWindow:string|null}}
  */
 function getSprayAdvisory(weatherData) {
-  const { current, hourly, timezoneOffsetSeconds } = weatherData;
+  const { current, hourly, timezoneOffsetSeconds, hourlyStepSeconds } = weatherData;
 
   const { score, reasons, hardBlock } = evaluateSnapshot({
     temperature: current.temperature,
@@ -229,7 +238,7 @@ function getSprayAdvisory(weatherData) {
   });
 
   const recommendation = scoreToRecommendation(score, hardBlock);
-  const bestSprayWindow = findBestSprayWindow(hourly, timezoneOffsetSeconds, 2);
+  const bestSprayWindow = findBestSprayWindow(hourly, timezoneOffsetSeconds, 2, hourlyStepSeconds || 3600);
 
   return {
     sprayScore: score,

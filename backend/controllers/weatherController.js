@@ -21,14 +21,24 @@ const { getSprayAdvisory } = require('../utils/sprayAdvisor');
  */
 function mapErrorToResponse(err) {
   const message = err?.message || '';
+  const apiMessage = err?.apiMessage;
 
   switch (message) {
     case 'WEATHER_API_KEY_MISSING':
-      return { status: 503, error: 'Weather service is not configured on the server.' };
+      return { status: 503, error: 'Weather service is not configured on the server. Set OPENWEATHER_API_KEY in backend/.env.' };
     case 'INVALID_COORDINATES':
       return { status: 400, error: 'Please provide valid "lat" and "lon" numeric query parameters.' };
     case 'WEATHER_API_UNAUTHORIZED':
-      return { status: 502, error: 'Weather provider rejected the request (invalid API key).' };
+      return {
+        status: 502,
+        error:
+          'OpenWeatherMap rejected the API key (401 Unauthorized) even on the free fallback endpoints. ' +
+          'This usually means the key is incorrect, or a brand-new key that has not finished activating yet ' +
+          '(can take up to ~2 hours). Double-check OPENWEATHER_API_KEY in backend/.env.' +
+          (apiMessage ? ` (OpenWeatherMap said: "${apiMessage}")` : ''),
+      };
+    case 'WEATHER_API_NOT_FOUND':
+      return { status: 404, error: 'Weather data not found for the given coordinates.' };
     case 'WEATHER_API_RATE_LIMITED':
       return { status: 429, error: 'Weather provider rate limit reached. Please try again shortly.' };
     case 'WEATHER_API_TIMEOUT':
