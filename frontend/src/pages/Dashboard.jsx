@@ -4,6 +4,7 @@ import axios from "axios";
 import DashboardMetrics from "../components/DashboardMetrics";
 import PlantScanPanel from "../components/PlantScanPanel";
 import UpcomingSpraysCard from "../components/UpcomingSpraysCard";
+import WeatherAdvisory from "../components/weather/WeatherAdvisory"; // ← NEW: Weather-Based Spray Advisory (isolated module)
 
 import {
   Bell,
@@ -268,6 +269,9 @@ const Dashboard = () => {
             />
           </div>
         </div>
+
+        {/* ── NEW: Weather-Based Spray Advisory — sits below the disease result section, fully self-contained ── */}
+        <WeatherAdvisory />
       </div>
     </div>
   );
