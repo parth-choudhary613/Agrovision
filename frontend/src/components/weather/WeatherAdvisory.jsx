@@ -1,19 +1,6 @@
 // frontend/src/components/weather/WeatherAdvisory.jsx
-//
-// NEW COMPONENT — Weather-Based Spray Advisory module.
-// This is the main container: it gets the user's location (or a manually
-// entered lat/lon), calls the backend advisory endpoint, and renders
-// WeatherCard + SprayScore. It is designed to be dropped in anywhere
-// (e.g. below the disease-detection result) without needing any props from
-// the parent page.
-//
-// IMPORTANT: This component is fully isolated. If the weather API key is
-// missing, the network is down, or geolocation is denied, only this section
-// shows an error/fallback UI — it never throws in a way that could break
-// the rest of the Dashboard or the disease-detection feature.
-
 import React, { useState, useCallback } from 'react';
-import { MapPin, RefreshCw, AlertCircle, CloudOff } from 'lucide-react';
+import { MapPin, RefreshCw, AlertCircle, CloudOff, CloudSunRain } from 'lucide-react';
 import WeatherCard from './WeatherCard';
 import SprayScore from './SprayScore';
 import { fetchSprayAdvisory, getCurrentPosition } from '../../services/weatherApi';
@@ -21,7 +8,7 @@ import { fetchSprayAdvisory, getCurrentPosition } from '../../services/weatherAp
 const WeatherAdvisory = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [advisory, setAdvisory] = useState(null); // full backend response
+  const [advisory, setAdvisory] = useState(null);
   const [coords, setCoords] = useState(null);
   const [manualLat, setManualLat] = useState('');
   const [manualLon, setManualLon] = useState('');
@@ -71,29 +58,10 @@ const WeatherAdvisory = () => {
   };
 
   return (
-    <div className="mt-8">
-      <div className="flex items-center justify-between mb-4">
-        <div>
-          <h2 className="text-xl font-bold text-gray-800">🌦️ Weather-Based Spray Advisory</h2>
-          <p className="text-sm text-gray-400 mt-0.5">
-            Know if it's safe to spray right now, based on live weather conditions.
-          </p>
-        </div>
-        {advisory && (
-          <button
-            onClick={handleRefresh}
-            disabled={loading}
-            className="flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-gray-800 bg-gray-50 hover:bg-gray-100 px-3 py-2 rounded-xl transition disabled:opacity-50"
-          >
-            <RefreshCw size={15} className={loading ? 'animate-spin' : ''} />
-            Refresh
-          </button>
-        )}
-      </div>
-
+    <div className="mt-8 mb-8">
       {/* ── Initial state: prompt for location ─────────────────────────── */}
       {!advisory && !loading && (
-        <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-8 text-center">
+        <div className="bg-white rounded-[32px] shadow-sm border border-gray-100 p-8 text-center max-w-2xl">
           <MapPin className="mx-auto text-green-600 mb-3" size={32} />
           <p className="text-gray-600 font-medium mb-4">
             Enable location access to get a spray advisory for your field.
@@ -147,15 +115,15 @@ const WeatherAdvisory = () => {
 
       {/* ── Loading state ───────────────────────────────────────────────── */}
       {loading && (
-        <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-10 flex flex-col items-center gap-4">
+        <div className="bg-white rounded-[32px] shadow-sm border border-gray-100 p-10 flex flex-col items-center gap-4 max-w-2xl">
           <div className="w-12 h-12 border-4 border-green-500 border-t-transparent rounded-full animate-spin" />
-          <p className="text-gray-500 font-medium">Fetching latest weather data...</p>
+          <p className="text-gray-500 font-medium">Fetching live weather data...</p>
         </div>
       )}
 
       {/* ── Error state (after a previous successful load, or manual retry) ── */}
       {error && !loading && advisory === null && coords && (
-        <div className="bg-red-50 border border-red-100 rounded-3xl p-6 flex items-center gap-3">
+        <div className="bg-red-50 border border-red-100 rounded-3xl p-6 flex items-center gap-3 max-w-2xl">
           <CloudOff className="text-red-500 flex-shrink-0" size={22} />
           <div>
             <p className="text-red-700 font-semibold text-sm">Could not load weather advisory</p>
@@ -164,10 +132,41 @@ const WeatherAdvisory = () => {
         </div>
       )}
 
-      {/* ── Success state ───────────────────────────────────────────────── */}
+      {/* ── Success state (The Unified Card) ────────────────────────────── */}
       {advisory && !loading && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="bg-white rounded-[32px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 p-6 sm:p-10 w-full">
+          
+          {/* Unified Header */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-10">
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 bg-blue-50 text-blue-500 rounded-2xl flex items-center justify-center flex-shrink-0">
+                 <CloudSunRain size={28} strokeWidth={1.5} />
+              </div>
+              <div>
+                <h2 className="text-xl sm:text-2xl font-bold text-slate-800">Weather-Based Spray Advisory</h2>
+                <p className="text-sm sm:text-base text-gray-500 mt-1">
+                  Know if it's safe to spray right now, based on live weather conditions.
+                </p>
+              </div>
+            </div>
+            
+            <button
+              onClick={handleRefresh}
+              disabled={loading}
+              className="flex items-center justify-center gap-2 text-sm font-semibold text-slate-700 hover:text-slate-900 bg-white border border-gray-200 hover:bg-gray-50 px-5 py-2.5 rounded-xl transition-all disabled:opacity-50 flex-shrink-0 shadow-sm"
+            >
+              <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
+              Refresh
+            </button>
+          </div>
+
+          {/* Current Weather Section */}
           <WeatherCard weather={advisory.weather} />
+          
+          {/* Divider */}
+          <hr className="my-10 border-gray-100" />
+          
+          {/* Advisory & Reasoning Section */}
           <SprayScore
             sprayScore={advisory.sprayScore}
             recommendation={advisory.recommendation}

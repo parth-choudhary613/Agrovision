@@ -35,7 +35,6 @@ const PlantScanPanel = ({ token, onScanComplete, onSprayScheduled }) => {
     }
   }, []);
 
-  // Respond to navbar "Scan New Plant" button
   useEffect(() => {
     const handler = () => { if (!result) fileInputRef.current?.click(); };
     window.addEventListener("triggerScan", handler);
@@ -123,7 +122,6 @@ const PlantScanPanel = ({ token, onScanComplete, onSprayScheduled }) => {
     closeCamera();
   };
 
-  // ── Derived display values — all from API, nothing hardcoded ─────────────
   const isHealthy      = result?.isHealthy || result?.diseaseDetected === "Healthy";
   const confidencePct  = result?.confidence
     ? (result.confidence <= 1 ? result.confidence * 100 : result.confidence).toFixed(0)
@@ -139,22 +137,26 @@ const PlantScanPanel = ({ token, onScanComplete, onSprayScheduled }) => {
 
   return (
     <div data-scan-panel className="w-full">
-
       {/* ── Camera ── */}
       {isCameraOpen && (
-        <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden mb-6 max-w-2xl">
-          <div className="flex justify-between items-center px-6 py-4 border-b">
-            <p className="font-bold text-lg">Camera</p>
-            <button onClick={closeCamera} className="text-gray-400 hover:text-gray-600"><X size={22} /></button>
+        <div className="bg-white rounded-2xl sm:rounded-3xl border border-gray-100 shadow-sm overflow-hidden mb-6 max-w-2xl mx-auto">
+          <div className="flex justify-between items-center px-4 sm:px-6 py-3 sm:py-4 border-b">
+            <p className="font-bold text-base sm:text-lg">Camera</p>
+            <button onClick={closeCamera} className="text-gray-400 hover:text-gray-600 p-1 rounded-full hover:bg-gray-100 transition-colors">
+              <X size={20} className="sm:w-[22px] sm:h-[22px]" />
+            </button>
           </div>
-          <div className="p-6">
-            <video ref={videoRef} autoPlay playsInline className="w-full rounded-2xl" />
+          <div className="p-4 sm:p-6">
+            {/* ✅ FIXED: Added strict height and object-cover to video */}
+            <video ref={videoRef} autoPlay playsInline className="w-full h-[300px] sm:h-[400px] object-cover rounded-xl sm:rounded-2xl bg-black" />
             <canvas ref={canvasRef} className="hidden" />
-            <div className="flex justify-center gap-4 mt-6">
-              <button onClick={capturePhoto} className="bg-green-700 text-white px-8 py-3 rounded-2xl font-semibold flex items-center gap-2">
+            <div className="flex flex-col sm:flex-row justify-center gap-3 sm:gap-4 mt-5 sm:mt-6">
+              <button onClick={capturePhoto} className="w-full sm:w-auto bg-green-700 hover:bg-green-800 text-white px-8 py-3 rounded-xl sm:rounded-2xl font-semibold flex justify-center items-center gap-2 transition-colors">
                 <Camera size={18} /> Capture
               </button>
-              <button onClick={closeCamera} className="px-6 py-3 border rounded-2xl">Cancel</button>
+              <button onClick={closeCamera} className="w-full sm:w-auto px-6 py-3 border border-gray-200 hover:bg-gray-50 rounded-xl sm:rounded-2xl font-medium transition-colors">
+                Cancel
+              </button>
             </div>
           </div>
         </div>
@@ -162,33 +164,34 @@ const PlantScanPanel = ({ token, onScanComplete, onSprayScheduled }) => {
 
       {/* ── IDLE: two-column drag-drop + buttons ── */}
       {!isCameraOpen && !preview && !result && (
-        <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden max-w-2xl">
-          <div className="flex flex-col sm:flex-row">
+        <div className="bg-white rounded-2xl sm:rounded-3xl border border-gray-100 shadow-sm overflow-hidden max-w-2xl mx-auto">
+          <div className="flex flex-col md:flex-row">
             <div
               onDrop={handleDrop}
               onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
               onDragLeave={() => setDragOver(false)}
               onClick={() => fileInputRef.current?.click()}
-              className={`flex-1 flex flex-col items-center justify-center p-8 cursor-pointer transition-all border-dashed border-2 rounded-3xl m-4
-                ${dragOver ? "border-green-500 bg-green-50" : "border-gray-200 hover:border-green-300 hover:bg-gray-50"}`}
+              className={`flex-1 flex flex-col items-center justify-center p-6 sm:p-8 cursor-pointer transition-all border-dashed border-2 rounded-xl sm:rounded-3xl m-3 sm:m-4
+                ${dragOver ? "border-green-500 bg-green-50" : "border-gray-200 hover:border-green-400 hover:bg-green-50/30"}`}
             >
-              <div className="w-16 h-16 bg-green-100 rounded-2xl flex items-center justify-center mb-4">
-                <Leaf size={38} className="text-green-700" />
+              <div className="w-12 h-12 sm:w-16 sm:h-16 bg-green-100 rounded-xl sm:rounded-2xl flex items-center justify-center mb-3 sm:mb-4">
+                <Leaf size={28} className="text-green-700 sm:w-[38px] sm:h-[38px]" />
               </div>
-              <h3 className="text-lg font-bold text-gray-800 mb-1">Scan Your Plant</h3>
-              <p className="text-sm text-gray-500 text-center">Drag & drop your plant photo here or click to upload</p>
-              <p className="text-xs text-gray-400 mt-3">JPG, PNG, WEBP • Max 5MB</p>
+              <h3 className="text-base sm:text-lg font-bold text-gray-800 mb-1 text-center">Scan Your Plant</h3>
+              <p className="text-xs sm:text-sm text-gray-500 text-center max-w-[200px] sm:max-w-none">Drag & drop your photo here or tap to upload</p>
+              <p className="text-[10px] sm:text-xs text-gray-400 mt-2 sm:mt-3">JPG, PNG, WEBP • Max 5MB</p>
             </div>
-            <div className="flex flex-col items-center justify-center gap-3 px-6 py-8 sm:border-l border-gray-100">
+            
+            <div className="flex flex-col w-full md:w-auto items-center justify-center gap-3 p-5 sm:p-6 md:py-8 border-t md:border-t-0 md:border-l border-gray-100 bg-gray-50/50">
               <button
                 onClick={() => fileInputRef.current?.click()}
-                className="flex items-center gap-2 bg-green-700 hover:bg-green-800 text-white px-5 py-3 rounded-2xl font-semibold w-44 justify-center"
+                className="w-full sm:max-w-sm md:w-44 flex justify-center items-center gap-2 bg-green-700 hover:bg-green-800 text-white px-5 py-3 rounded-xl sm:rounded-2xl font-semibold shadow-sm transition-all"
               >
                 <Upload size={17} /> Choose File
               </button>
               <button
                 onClick={openCamera}
-                className="flex items-center gap-2 border border-gray-300 hover:bg-gray-50 px-5 py-3 rounded-2xl font-semibold w-44 justify-center"
+                className="w-full sm:max-w-sm md:w-44 flex justify-center items-center gap-2 bg-white border border-gray-300 hover:border-gray-400 hover:bg-gray-50 px-5 py-3 rounded-xl sm:rounded-2xl font-semibold shadow-sm transition-all"
               >
                 <Camera size={17} /> Open Camera
               </button>
@@ -199,23 +202,25 @@ const PlantScanPanel = ({ token, onScanComplete, onSprayScheduled }) => {
 
       {/* ── PREVIEW: ready to scan ── */}
       {!isCameraOpen && preview && !result && (
-        <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden max-w-2xl">
-          <div className="flex justify-between items-center px-6 py-4 border-b">
-            <p className="font-semibold text-lg">Ready to Scan</p>
-            <button onClick={resetScan} className="text-gray-400 hover:text-gray-600"><X size={22} /></button>
+        <div className="bg-white rounded-2xl sm:rounded-3xl border border-gray-100 shadow-sm overflow-hidden max-w-2xl mx-auto">
+          <div className="flex justify-between items-center px-4 sm:px-6 py-3 sm:py-4 border-b">
+            <p className="font-semibold text-base sm:text-lg">Ready to Scan</p>
+            <button onClick={resetScan} className="text-gray-400 hover:text-gray-600 p-1 rounded-full hover:bg-gray-100 transition-colors">
+              <X size={20} className="sm:w-[22px] sm:h-[22px]" />
+            </button>
           </div>
-          <div className="p-6 flex flex-col sm:flex-row gap-6 items-center">
-            <img src={preview} alt="preview" className="w-48 h-48 object-cover rounded-2xl shadow" />
-            <div className="flex flex-col items-center sm:items-start gap-4">
+          <div className="p-4 sm:p-6 flex flex-col sm:flex-row gap-4 sm:gap-6 items-center">
+            <img src={preview} alt="preview" className="w-32 h-32 sm:w-48 sm:h-48 object-cover rounded-xl sm:rounded-2xl shadow-sm border border-gray-100" />
+            <div className="flex flex-col w-full sm:w-auto items-center sm:items-start gap-3 sm:gap-4 text-center sm:text-left">
               <p className="text-gray-500 text-sm">Image ready for disease analysis</p>
               {!scanning ? (
-                <button onClick={handleScan} className="bg-green-700 hover:bg-green-800 text-white px-8 py-3 rounded-2xl font-bold">
+                <button onClick={handleScan} className="w-full sm:w-auto bg-green-700 hover:bg-green-800 text-white px-8 py-3 rounded-xl sm:rounded-2xl font-bold shadow-md transition-all active:scale-95">
                   Scan for Disease
                 </button>
               ) : (
-                <div className="flex flex-col items-center gap-2">
-                  <div className="animate-spin w-9 h-9 border-4 border-green-500 border-t-transparent rounded-full" />
-                  <p className="text-sm text-gray-500">Analyzing your plant…</p>
+                <div className="flex flex-col items-center sm:items-start gap-2 w-full">
+                  <div className="animate-spin w-8 h-8 sm:w-9 sm:h-9 border-4 border-green-500 border-t-transparent rounded-full mx-auto sm:mx-0" />
+                  <p className="text-sm text-gray-500 font-medium text-center sm:text-left w-full">Analyzing your plant…</p>
                 </div>
               )}
             </div>
@@ -223,127 +228,123 @@ const PlantScanPanel = ({ token, onScanComplete, onSprayScheduled }) => {
         </div>
       )}
 
-      {/* ── RESULT: diagnosis card with REAL API data ── */}
+      {/* ── RESULT: diagnosis card ── */}
       {result && (
-        <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden w-full">
-          <div className="flex justify-between items-center px-6 py-4 border-b">
-            <h2 className="text-lg font-bold text-gray-900">Recent Diagnosis</h2>
-            <button onClick={resetScan} className="text-green-700 text-sm font-medium hover:underline">
+        <div className="bg-white rounded-2xl sm:rounded-3xl border border-gray-100 shadow-md overflow-hidden w-full">
+          <div className="flex justify-between items-center px-4 sm:px-6 py-3 sm:py-4 border-b bg-gray-50/50">
+            <h2 className="text-base sm:text-lg font-bold text-gray-900">Recent Diagnosis</h2>
+            <button onClick={resetScan} className="text-green-700 text-xs sm:text-sm font-semibold hover:text-green-800 hover:underline">
               Scan New Plant
             </button>
           </div>
 
           <div className="flex flex-col lg:flex-row">
-            {/* Plant image */}
-            <div className="lg:w-5/12 p-5 border-b lg:border-b-0 lg:border-r border-gray-100">
+          {/* Plant image */}
+         {/* Plant image */}
+            <div className="w-full lg:w-5/12 p-3 sm:p-5 border-b lg:border-b-0 lg:border-r border-gray-100 bg-gray-50/30 flex items-center justify-center">
               {preview && (
-                <img src={preview} alt="Scanned Plant" className="w-full h-56 lg:h-full object-cover rounded-2xl shadow" />
+                <img src={preview} alt="Scanned Plant" className="w-full h-56 sm:h-72 lg:h-[340px] object-cover rounded-xl sm:rounded-2xl shadow-sm border border-gray-200/60" />
               )}
             </div>
 
-            {/* Details — all from API */}
-            <div className="lg:w-7/12 p-6 space-y-4">
-              {/* Disease + confidence */}
+            {/* Details */}
+            <div className="w-full lg:w-7/12 p-4 sm:p-6 space-y-4 sm:space-y-5">
               <div className="flex items-start justify-between gap-3">
-                <div>
-                  <p className={`text-2xl font-bold ${isHealthy ? "text-green-700" : "text-red-600"}`}>
+                <div className="flex-1 min-w-0">
+                  <p className={`text-xl sm:text-2xl font-bold leading-tight break-words ${isHealthy ? "text-green-700" : "text-red-600"}`}>
                     {isHealthy ? "Healthy" : (diseaseName || "Disease Detected")}
                   </p>
-                  <span className={`inline-block mt-1 px-3 py-0.5 text-xs font-semibold rounded-full
-                    ${isHealthy ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
+                  <span className={`inline-block mt-1.5 px-2.5 sm:px-3 py-0.5 text-[10px] sm:text-xs font-semibold rounded-full border
+                    ${isHealthy ? "bg-green-50 text-green-700 border-green-200" : "bg-red-50 text-red-700 border-red-200"}`}>
                     {confidencePct}% Confidence
                   </span>
                 </div>
                 {isHealthy
-                  ? <CheckCircle size={28} className="text-emerald-500 flex-shrink-0" />
-                  : <AlertTriangle size={28} className="text-red-500 flex-shrink-0" />}
+                  ? <CheckCircle size={24} className="text-emerald-500 flex-shrink-0 sm:w-[28px] sm:h-[28px]" />
+                  : <AlertTriangle size={24} className="text-red-500 flex-shrink-0 sm:w-[28px] sm:h-[28px]" />}
               </div>
 
-              {/* Crop + date */}
-              <div className="grid grid-cols-2 gap-y-3 text-sm pt-1">
-                <div>
-                  <p className="text-gray-400 text-xs mb-0.5">Crop</p>
-                  <p className="font-semibold">{result.cropName || "Unknown"}</p>
+              <div className="grid grid-cols-2 gap-3 sm:gap-4 text-sm pt-1">
+                <div className="bg-gray-50 p-2 sm:p-3 rounded-lg sm:rounded-xl border border-gray-100">
+                  <p className="text-gray-400 text-[10px] sm:text-xs mb-0.5">Crop</p>
+                  <p className="font-semibold text-gray-800 text-xs sm:text-sm truncate">{result.cropName || "Unknown"}</p>
                 </div>
-                <div>
-                  <p className="text-gray-400 text-xs mb-0.5">Detected On</p>
-                  <p className="font-semibold">
-                    {new Date().toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })},{" "}
+                <div className="bg-gray-50 p-2 sm:p-3 rounded-lg sm:rounded-xl border border-gray-100">
+                  <p className="text-gray-400 text-[10px] sm:text-xs mb-0.5">Detected On</p>
+                  <p className="font-semibold text-gray-800 text-xs sm:text-sm truncate">
+                    {new Date().toLocaleDateString("en-IN", { day: "numeric", month: "short" })},{" "}
                     {new Date().toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })}
                   </p>
                 </div>
               </div>
 
-              {/* Treatment — only shown if disease detected */}
               {!isHealthy && (pesticide || recommendation) && (
                 <>
-                  <div className="pt-3 border-t border-gray-100">
-                    <p className="text-xs text-gray-400 mb-1">Recommended Pesticide</p>
-                    <p className="font-bold text-green-700 text-base">
+                  <div className="pt-3 sm:pt-4 border-t border-gray-100">
+                    <p className="text-[10px] sm:text-xs text-gray-400 mb-1 uppercase tracking-wider font-semibold">Recommended Treatment</p>
+                    <p className="font-bold text-green-700 text-sm sm:text-base leading-snug">
                       {pesticide || "Consult a local agricultural expert"}
                     </p>
                   </div>
 
                   {(dosage || sprayInterval) && (
-                    <div className="grid grid-cols-2 gap-3 text-sm">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 text-sm">
                       {dosage && (
-                        <div>
-                          <p className="text-xs text-gray-400 mb-0.5">Dosage</p>
-                          <p className="font-medium">{dosage}</p>
+                        <div className="flex items-center justify-between sm:block bg-blue-50/50 p-2 sm:p-3 rounded-lg border border-blue-100">
+                          <p className="text-[10px] sm:text-xs text-blue-500/80 mb-0 sm:mb-0.5">Dosage</p>
+                          <p className="font-medium text-blue-900 text-xs sm:text-sm text-right sm:text-left">{dosage}</p>
                         </div>
                       )}
                       {sprayInterval && (
-                        <div>
-                          <p className="text-xs text-gray-400 mb-0.5">Spray Interval</p>
-                          <p className="font-medium">{sprayInterval}</p>
+                        <div className="flex items-center justify-between sm:block bg-purple-50/50 p-2 sm:p-3 rounded-lg border border-purple-100">
+                          <p className="text-[10px] sm:text-xs text-purple-500/80 mb-0 sm:mb-0.5">Interval</p>
+                          <p className="font-medium text-purple-900 text-xs sm:text-sm text-right sm:text-left">{sprayInterval}</p>
                         </div>
                       )}
                     </div>
                   )}
 
-                  {/* Show Kindwise's raw recommendation text if available */}
                   {recommendation && recommendation !== pesticide && (
-                    <div className="bg-amber-50 border border-amber-100 rounded-2xl p-3">
-                      <p className="text-xs text-amber-700 font-medium mb-1">Treatment Note</p>
-                      <p className="text-xs text-amber-800 leading-relaxed">{recommendation}</p>
+                    <div className="bg-amber-50 border border-amber-100 rounded-xl sm:rounded-2xl p-3 sm:p-4">
+                      <p className="text-[10px] sm:text-xs text-amber-700 font-bold mb-1 uppercase tracking-wider">Expert Note</p>
+                      <p className="text-xs sm:text-sm text-amber-900 leading-relaxed">{recommendation}</p>
                     </div>
                   )}
                 </>
               )}
 
-              {/* Healthy message */}
               {isHealthy && (
-                <div className="bg-green-50 border border-green-100 rounded-2xl p-3">
-                  <p className="text-sm text-green-700 font-medium">✅ No disease detected</p>
-                  <p className="text-xs text-green-600 mt-0.5">Your plant appears healthy. Keep monitoring regularly.</p>
+                <div className="bg-green-50 border border-green-100 rounded-xl sm:rounded-2xl p-3 sm:p-4">
+                  <p className="text-sm sm:text-base text-green-800 font-semibold flex items-center gap-2">
+                    <CheckCircle size={18} className="text-green-600" /> Plant is Thriving!
+                  </p>
+                  <p className="text-xs sm:text-sm text-green-700 mt-1 sm:mt-1.5 opacity-90">Your plant appears healthy. Keep monitoring regularly to maintain crop yield.</p>
                 </div>
               )}
 
-              {/* Schedule confirmation banner */}
               {scheduleConfirmed && (
-                <div className="bg-green-50 border border-green-100 rounded-2xl p-3 flex items-center gap-2">
-                  <CheckCircle size={16} className="text-green-600 flex-shrink-0" />
-                  <p className="text-sm text-green-700 font-medium">
-                    Spray schedule saved! Check "Upcoming Spray Reminders" on your dashboard.
+                <div className="bg-green-50 border border-green-200 rounded-xl sm:rounded-2xl p-3 sm:p-4 flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3">
+                  <CheckCircle size={18} className="text-green-600 flex-shrink-0 mt-0.5 sm:mt-0" />
+                  <p className="text-xs sm:text-sm text-green-800 font-medium leading-snug">
+                    Schedule saved! View in "Upcoming Reminders".
                   </p>
                 </div>
               )}
 
-              {/* Actions */}
-              <div className="flex gap-3 pt-2">
+              <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 pt-2 sm:pt-4 border-t border-gray-100">
                 <button
                   onClick={() => setShowDetailsModal(true)}
                   disabled={!hasDetails}
-                  className="flex-1 border border-gray-300 py-3 rounded-2xl text-sm font-medium hover:bg-gray-50 transition flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full flex-1 bg-white border border-gray-300 py-2.5 sm:py-3 rounded-xl sm:rounded-2xl text-xs sm:text-sm font-semibold text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:bg-gray-50 disabled:cursor-not-allowed shadow-sm"
                 >
-                  <FileText size={16} /> View Details
+                  <FileText size={16} className="sm:w-[18px] sm:h-[18px]" /> View Details
                 </button>
                 {!isHealthy && (
                   <button
                     onClick={() => setShowScheduleModal(true)}
-                    className="flex-1 bg-green-700 hover:bg-green-800 text-white py-3 rounded-2xl text-sm font-medium flex items-center justify-center gap-2 transition"
+                    className="w-full flex-1 bg-green-700 hover:bg-green-800 text-white py-2.5 sm:py-3 rounded-xl sm:rounded-2xl text-xs sm:text-sm font-semibold flex items-center justify-center gap-2 transition-colors shadow-sm active:scale-[0.98]"
                   >
-                    <Calendar size={16} /> Add to Schedule
+                    <Calendar size={16} className="sm:w-[18px] sm:h-[18px]" /> Add to Schedule
                   </button>
                 )}
               </div>
@@ -355,12 +356,10 @@ const PlantScanPanel = ({ token, onScanComplete, onSprayScheduled }) => {
       <input ref={fileInputRef} type="file" accept="image/*" className="hidden"
         onChange={(e) => loadFile(e.target.files[0])} />
 
-      {/* ── View Details modal ── */}
+      {/* ── Modals ── */}
       {showDetailsModal && (
         <ScanDetailsModal result={result} onClose={() => setShowDetailsModal(false)} />
       )}
-
-      {/* ── Add to Schedule modal ── */}
       {showScheduleModal && (
         <ScheduleCalendarModal
           result={result}

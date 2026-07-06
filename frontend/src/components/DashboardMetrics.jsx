@@ -3,15 +3,17 @@
 
 const MetricCard = ({ title, value, subtitle, icon, bgColor }) => (
   <div
-    className={`rounded-2xl p-5 shadow-sm border border-gray-100 ${bgColor} transition-all hover:scale-[1.02] hover:shadow-md`}
+    className={`rounded-xl sm:rounded-2xl p-3 sm:p-5 shadow-sm border border-gray-100 ${bgColor} transition-all hover:scale-[1.02] hover:shadow-md`}
   >
-    <div className="flex items-start justify-between">
-      <div>
-        <p className="text-4xl font-bold text-gray-900">{value}</p>
-        <p className="text-base font-semibold text-gray-800 mt-2">{title}</p>
-        <p className="text-xs text-gray-500 mt-0.5">{subtitle}</p>
+    <div className="flex items-start justify-between gap-1 sm:gap-2">
+      <div className="min-w-0 flex-1">
+        {/* Scaled down text for mobile, large for screens sm and up */}
+        <p className="text-2xl sm:text-4xl font-bold text-gray-900 truncate">{value}</p>
+        <p className="text-xs sm:text-base font-semibold text-gray-800 mt-1 sm:mt-2 truncate">{title}</p>
+        <p className="text-[10px] sm:text-xs text-gray-500 mt-0.5 truncate">{subtitle}</p>
       </div>
-      <span className="text-5xl opacity-90">{icon}</span>
+      {/* Scaled down icon for mobile */}
+      <span className="text-3xl sm:text-5xl opacity-90 flex-shrink-0">{icon}</span>
     </div>
   </div>
 );
@@ -25,8 +27,8 @@ const DashboardMetrics = ({ stats }) => {
     treatmentsDone = 0,
   } = stats || {};
 
-  return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+ return (
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5">
       <MetricCard
         title="Crops Scanned"
         value={cropsScanned}

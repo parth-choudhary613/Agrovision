@@ -176,76 +176,98 @@ const Dashboard = () => {
   return (
     <div className="min-h-screen bg-[#f5f5f5] lg:ml-72">
       {/* NAVBAR */}
-      <div className="w-full bg-white border-b border-gray-200 px-4 sm:px-6 lg:px-8 py-4 lg:py-5 flex items-center justify-between gap-4 relative z-40">
-        <div className="min-w-0">
-          <h1 className="text-xl sm:text-2xl lg:text-4xl font-bold text-black truncate">
-            Welcome back, {loginType === "phone" ? username : firstName}! 👋
-          </h1>
-          <p className="text-gray-400 text-xs sm:text-sm mt-0.5">
-            Here's what's happening in your farm today.
-          </p>
-        </div>
+     <div className="w-full bg-white border-b border-gray-100 px-4 sm:px-6 lg:px-8 py-3 sm:py-4 lg:py-5 flex items-center justify-between gap-3 sm:gap-4 relative z-40">
+  
+  {/* Left Section: Welcome Text */}
+  <div className="flex-1 min-w-0">
+    <h1 className="text-lg sm:text-2xl lg:text-3xl font-bold text-gray-900 truncate tracking-tight">
+      Welcome back, {loginType === "phone" ? username : firstName}! 👋
+    </h1>
+    <p className="text-gray-500 text-xs sm:text-sm mt-0.5 sm:mt-1 truncate">
+      Here's what's happening in your farm today.
+    </p>
+  </div>
 
-        <div className="flex items-center gap-2 sm:gap-3 lg:gap-5 flex-shrink-0">
-          <div className="hidden md:flex items-center gap-2 border border-gray-200 rounded-xl px-3 py-2.5 cursor-pointer hover:bg-gray-50 transition">
-            <Languages size={17} className="text-gray-500" />
-            <span className="font-medium text-gray-600 text-sm">English</span>
-            <ChevronDown size={15} className="text-gray-400" />
+  {/* Right Section: Actions */}
+  <div className="flex items-center gap-1.5 sm:gap-3 lg:gap-4 flex-shrink-0">
+    
+    {/* Language Selector (Hidden on Mobile) */}
+    <button className="hidden md:flex items-center gap-1.5 border border-gray-200 rounded-lg px-3 py-2 cursor-pointer hover:bg-gray-50 hover:border-gray-300 transition-colors focus:outline-none focus:ring-2 focus:ring-green-500/20">
+      <Languages size={16} className="text-gray-500" />
+      <span className="font-medium text-gray-700 text-sm">English</span>
+      <ChevronDown size={14} className="text-gray-400" />
+    </button>
+
+    {/* Notification Bell */}
+    <button className="relative p-2 rounded-full hover:bg-gray-100 transition-colors focus:outline-none">
+      <Bell size={20} className="text-gray-600 sm:w-5 sm:h-5 w-4 h-4" />
+      <span className="absolute top-1 sm:top-1.5 right-1 sm:right-1.5 bg-red-500 text-white text-[10px] w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full flex items-center justify-center font-bold ring-2 ring-white">
+        3
+      </span>
+    </button>
+
+    {/* User Profile */}
+    {isLoggedIn && !isSignup && (
+      <div className="relative" ref={dropdownRef}>
+        <button
+          onClick={() => setOpenDropdown(!openDropdown)}
+          className="flex items-center gap-2 p-1 sm:px-2.5 sm:py-1.5 rounded-full sm:rounded-xl hover:bg-gray-100 transition-colors focus:outline-none"
+        >
+          {/* Ensure Avatar component accepts className or wrap it in a size-constrained div */}
+          <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-full overflow-hidden flex-shrink-0">
+             <Avatar size="sm" />
           </div>
-
-          <div className="relative cursor-pointer p-1">
-            <Bell size={21} className="text-gray-600" />
-            <div className="absolute -top-1 -right-1 bg-red-500 text-white text-[9px] w-4 h-4 rounded-full flex items-center justify-center font-bold">
-              3
-            </div>
+          
+          <div className="hidden md:flex flex-col items-start leading-none">
+            <span className="font-semibold text-gray-800 text-sm">{firstName}</span>
+            <span className="text-xs text-gray-500 font-medium mt-0.5">Farmer</span>
           </div>
+          <ChevronDown
+            size={16}
+            className={`hidden sm:block text-gray-400 transition-transform duration-200 ${
+              openDropdown ? "rotate-180" : ""
+            }`}
+          />
+        </button>
 
-          {isLoggedIn && !isSignup && (
-            <div className="relative" ref={dropdownRef}>
-              <div
-                onClick={() => setOpenDropdown(!openDropdown)}
-                className="flex items-center gap-2 cursor-pointer hover:bg-gray-100 px-2 py-1.5 rounded-xl transition"
-              >
-                <Avatar />
-                <div className="hidden md:block leading-tight">
-                  <p className="font-semibold text-gray-800 text-sm">{firstName}</p>
-                  <p className="text-xs text-gray-400">Farmer</p>
-                </div>
-                <ChevronDown
-                  size={15}
-                  className={`text-gray-400 transition ${openDropdown ? "rotate-180" : ""}`}
-                />
+        {/* Dropdown Menu */}
+        {openDropdown && (
+          <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden z-50 origin-top-right">
+            <div className="px-4 py-3 border-b border-gray-100 bg-gray-50/50 flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0">
+                <Avatar size="md" />
               </div>
-              {openDropdown && (
-                <div className="absolute right-0 top-14 w-52 bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden z-50">
-                  <div className="px-4 py-3 border-b border-gray-100 flex items-center gap-3">
-                    <Avatar size="sm" />
-                    <div className="min-w-0">
-                      <p className="font-semibold text-gray-800 text-sm truncate">{username}</p>
-                      <p className="text-xs text-gray-400">Farmer Account</p>
-                    </div>
-                  </div>
-                  <button
-                    onClick={logout}
-                    className="w-full text-left px-4 py-3 text-red-500 hover:bg-red-50 transition text-sm font-medium"
-                  >
-                    Logout
-                  </button>
-                </div>
-              )}
+              <div className="min-w-0 flex-1">
+                <p className="font-semibold text-gray-900 text-sm truncate">{username}</p>
+                <p className="text-xs text-gray-500 truncate">Farmer Account</p>
+              </div>
             </div>
-          )}
-
-          {/* ✅ FIXED: Scan New Plant button now scrolls + triggers scan panel */}
-          <button
-            onClick={handleScanNewPlant}
-            className="bg-green-700 hover:bg-green-800 text-white px-4 sm:px-5 py-2.5 rounded-2xl flex items-center gap-2 text-sm font-semibold shadow-md transition"
-          >
-            <Plus size={17} />
-            <span className="hidden sm:block">Scan New Plant</span>
-          </button>
-        </div>
+            <div className="p-1.5">
+              <button
+                onClick={logout}
+                className="w-full text-left px-3 py-2.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors text-sm font-medium"
+              >
+                Logout
+              </button>
+            </div>
+          </div>
+        )}
       </div>
+    )}
+
+    {/* Scan New Plant Button */}
+    {/* ✅ FIXED: Mobile = Circle icon button | Desktop = Pill button with text */}
+    <button
+      onClick={handleScanNewPlant}
+      className="bg-green-600 hover:bg-green-700 active:bg-green-800 text-white p-2.5 sm:px-4 sm:py-2.5 rounded-full sm:rounded-xl flex items-center justify-center gap-2 text-sm font-semibold shadow-sm hover:shadow transition-all focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 ml-1 sm:ml-0"
+    >
+      <Plus size={18} className="sm:hidden" />
+      <Plus size={16} className="hidden sm:block" />
+      <span className="hidden sm:block">Scan New Plant</span>
+    </button>
+    
+  </div>
+</div>
 
       {/* MAIN CONTENT */}
       <div className="p-4 sm:p-6 lg:p-8 space-y-8">
@@ -254,7 +276,7 @@ const Dashboard = () => {
 
         {/* Scan panel (left, wider) + Upcoming Spray Reminders (right) — always side by side */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-          <div ref={scanPanelRef} className="lg:col-span-2">
+         <div ref={scanPanelRef} className="w-full lg:col-span-2">
             <PlantScanPanel
               token={token}
               onScanComplete={handleScanComplete}

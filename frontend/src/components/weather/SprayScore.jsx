@@ -1,44 +1,35 @@
 // frontend/src/components/weather/SprayScore.jsx
-//
-// NEW COMPONENT — Weather-Based Spray Advisory module.
-// Purely presentational: displays sprayScore, recommendation, reasons list,
-// and the best spray window, with green/yellow/red visual indicators.
-
 import React from 'react';
-import { CheckCircle2, AlertTriangle, XCircle, Clock } from 'lucide-react';
+import { XCircle, CheckCircle2, AlertTriangle, Clock } from 'lucide-react';
 
-// Maps the backend's recommendationLevel to Tailwind color tokens.
 const LEVEL_STYLES = {
   green: {
-    ring: 'stroke-emerald-500',
-    text: 'text-emerald-600',
+    ring: 'stroke-[#10b981]',
+    text: 'text-emerald-700',
     bg: 'bg-emerald-50',
-    border: 'border-emerald-100',
+    border: 'border-emerald-200',
     icon: CheckCircle2,
-    badge: 'bg-emerald-100 text-emerald-700',
   },
   yellow: {
-    ring: 'stroke-amber-500',
-    text: 'text-amber-600',
+    ring: 'stroke-[#f59e0b]',
+    text: 'text-amber-700',
     bg: 'bg-amber-50',
-    border: 'border-amber-100',
+    border: 'border-amber-200',
     icon: AlertTriangle,
-    badge: 'bg-amber-100 text-amber-700',
   },
   red: {
-    ring: 'stroke-red-500',
+    ring: 'stroke-[#f43f5e]', // Deep red from image
     text: 'text-red-600',
-    bg: 'bg-red-50',
-    border: 'border-red-100',
+    bg: 'bg-[#FFF1F2]', // Pale red bg
+    border: 'border-red-200',
     icon: XCircle,
-    badge: 'bg-red-100 text-red-700',
   },
 };
 
 const REASON_DOT = {
-  good: 'bg-emerald-500',
-  warning: 'bg-amber-500',
-  danger: 'bg-red-500',
+  good: 'bg-[#10b981]', 
+  warning: 'bg-[#f59e0b]',
+  danger: 'bg-[#ef4444]',
   neutral: 'bg-gray-400',
 };
 
@@ -46,68 +37,79 @@ const SprayScore = ({ sprayScore, recommendation, recommendationLevel, reasons, 
   const styles = LEVEL_STYLES[recommendationLevel] || LEVEL_STYLES.yellow;
   const Icon = styles.icon;
 
-  // SVG ring math for the circular score gauge
-  const radius = 42;
+  const radius = 54;
   const circumference = 2 * Math.PI * radius;
   const clamped = Math.max(0, Math.min(100, sprayScore ?? 0));
   const dashOffset = circumference - (clamped / 100) * circumference;
 
   return (
-    <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-6">
-      <h3 className="text-lg font-bold text-gray-800 mb-5">Spray Advisory</h3>
-
-      <div className="flex flex-col sm:flex-row gap-6 items-center sm:items-start">
-        {/* Circular score gauge */}
-        <div className="relative w-32 h-32 flex-shrink-0">
-          <svg viewBox="0 0 100 100" className="w-32 h-32 -rotate-90">
-            <circle cx="50" cy="50" r={radius} fill="none" stroke="#f1f5f9" strokeWidth="10" />
-            <circle
-              cx="50" cy="50" r={radius} fill="none"
-              className={styles.ring}
-              strokeWidth="10"
-              strokeLinecap="round"
-              strokeDasharray={circumference}
-              strokeDashoffset={dashOffset}
-              style={{ transition: 'stroke-dashoffset 0.6s ease' }}
-            />
-          </svg>
-          <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <span className="text-3xl font-extrabold text-gray-800">{clamped}</span>
-            <span className="text-xs text-gray-400 font-medium">/ 100</span>
-          </div>
-        </div>
-
-        {/* Recommendation + best window */}
-        <div className="flex-1 w-full">
-          <div className={`flex items-center gap-2 rounded-2xl px-4 py-3 border ${styles.bg} ${styles.border}`}>
-            <Icon className={styles.text} size={22} />
-            <span className={`font-bold text-sm ${styles.text}`}>{recommendation}</span>
+    <div className="w-full grid grid-cols-1 md:grid-cols-[auto_1fr] gap-10 md:gap-16 items-start">
+      
+      {/* LEFT SIDE: Score & Status */}
+      <div className="w-full md:w-auto">
+        <h3 className="text-[15px] font-bold text-slate-800 uppercase tracking-widest mb-6">Spray Advisory</h3>
+        
+        <div className="flex flex-col sm:flex-row items-center sm:items-start gap-8">
+          
+          {/* Circular score gauge */}
+          <div className="relative w-40 h-40 flex-shrink-0 drop-shadow-sm">
+            <svg viewBox="0 0 120 120" className="w-40 h-40 -rotate-90">
+              <circle cx="60" cy="60" r={radius} fill="none" stroke="#F1F5F9" strokeWidth="10" />
+              <circle
+                cx="60" cy="60" r={radius} fill="none"
+                className={styles.ring}
+                strokeWidth="10"
+                strokeLinecap="round"
+                strokeDasharray={circumference}
+                strokeDashoffset={dashOffset}
+                style={{ transition: 'stroke-dashoffset 1s ease-out' }}
+              />
+            </svg>
+            <div className="absolute inset-0 flex flex-col items-center justify-center mt-1">
+              <span className="text-5xl font-extrabold text-slate-800 tracking-tighter">{clamped}</span>
+              <span className="text-sm text-slate-400 font-semibold mt-1">/ 100</span>
+            </div>
           </div>
 
-          <div className="flex items-center gap-2 mt-3 text-sm text-gray-600">
-            <Clock size={16} className="text-gray-400 flex-shrink-0" />
-            <span>
-              Best spray window:{' '}
-              <span className="font-semibold text-gray-800">{bestSprayWindow}</span>
-            </span>
+          {/* Recommendation + Window */}
+          <div className="flex flex-col gap-4 w-full text-center sm:text-left mt-2">
+            <div className={`inline-flex items-center justify-center sm:justify-start gap-2.5 rounded-xl px-5 py-2.5 border ${styles.bg} ${styles.border}`}>
+              <Icon className={styles.text} size={20} strokeWidth={2.5} />
+              <span className={`font-bold text-[15px] ${styles.text}`}>{recommendation}</span>
+            </div>
+
+            <div className="flex flex-col sm:flex-row items-center sm:items-start gap-2.5 mt-2 text-sm text-slate-600">
+              <Clock size={18} className="text-slate-400 flex-shrink-0 mt-0.5 hidden sm:block" />
+              <div>
+                <p className="text-slate-500 mb-0.5">Best spray window:</p>
+                <p className="font-bold text-slate-800">{bestSprayWindow}</p>
+              </div>
+            </div>
           </div>
+
         </div>
       </div>
 
-      {/* Reasons list */}
-      {Array.isArray(reasons) && reasons.length > 0 && (
-        <div className="mt-5 pt-5 border-t border-gray-100">
-          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Why?</p>
-          <ul className="space-y-2">
+      {/* RIGHT SIDE: Reasons List */}
+      <div className="w-full md:border-l md:border-gray-200 md:pl-12 pt-4 md:pt-0">
+        <h3 className="text-[15px] font-bold text-slate-800 uppercase tracking-widest mb-6">Why?</h3>
+        
+        {Array.isArray(reasons) && reasons.length > 0 ? (
+          <ul className="space-y-5">
             {reasons.map((reason, idx) => (
-              <li key={idx} className="flex items-start gap-2.5 text-sm text-gray-700">
-                <span className={`w-2 h-2 mt-1.5 rounded-full flex-shrink-0 ${REASON_DOT[reason.type] || REASON_DOT.neutral}`} />
-                <span className="leading-relaxed">{reason.message}</span>
+              <li key={idx} className="flex items-start gap-4">
+                <span className={`w-3 h-3 mt-1.5 rounded-full flex-shrink-0 ${REASON_DOT[reason.type] || REASON_DOT.neutral}`} />
+                <span className="text-[15px] leading-relaxed text-slate-700">
+                  {reason.message}
+                </span>
               </li>
             ))}
           </ul>
-        </div>
-      )}
+        ) : (
+          <p className="text-gray-500 italic">No specific conditions to report.</p>
+        )}
+      </div>
+
     </div>
   );
 };

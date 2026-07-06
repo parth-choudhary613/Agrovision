@@ -10,8 +10,8 @@ import {
   BookOpen, 
   Globe, 
   User, 
-  Menu, 
-  X,
+  ChevronRight,
+  ChevronLeft,
   ArrowRight
 } from 'lucide-react';
 
@@ -34,24 +34,37 @@ const Sidebar = () => {
 
   return (
     <>
-      {/* Mobile Toggle Button */}
+      {/* Mobile Toggle Button - High z-index [80] to sit above sidebar */}
       <button 
-        className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-[#1a4d2e] text-white rounded-md"
+        className={`
+          lg:hidden fixed top-1/2 -translate-y-1/2 z-[80] 
+          flex items-center justify-center
+          h-16 w-8 bg-[#1a4d2e] text-white 
+          rounded-r-xl shadow-[4px_0_15px_rgba(0,0,0,0.15)] 
+          transition-all duration-300 ease-in-out
+          hover:bg-[#143a22] hover:w-10
+          ${isOpen ? 'left-72' : 'left-0'}
+        `}
         onClick={() => setIsOpen(!isOpen)}
+        aria-label="Toggle Sidebar"
       >
-        {isOpen ? <X size={24} /> : <Menu size={24} />}
+        {isOpen ? (
+          <ChevronLeft size={24} className="transition-transform duration-300" />
+        ) : (
+          <ChevronRight size={24} className="animate-pulse transition-transform duration-300" />
+        )}
       </button>
 
-      {/* Sidebar Container */}
+      {/* Sidebar Container - Switched h-screen to h-[100dvh] for true full height */}
       <aside className={`
-  fixed top-0 left-0 h-screen bg-white border-r border-gray-100 transition-transform duration-300 z-50
-  w-72 p-6 flex flex-col
-  ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
-`}>
+        fixed top-0 left-0 h-[100dvh] bg-white border-r border-gray-100 transition-transform duration-300 ease-in-out z-[70]
+        w-72 p-6 flex flex-col shadow-2xl lg:shadow-none
+        ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+      `}>
         
         {/* Logo Section */}
-        <div className="flex items-center gap-3 mb-10">
-          <div className="text-[#4caf50]">
+        <div className="flex items-center gap-3 mb-10 group cursor-pointer shrink-0">
+          <div className="text-[#4caf50] transition-transform duration-300 group-hover:rotate-12 group-hover:scale-110">
             <Sprout size={40} fill="currentColor" />
           </div>
           <div>
@@ -61,31 +74,40 @@ const Sidebar = () => {
         </div>
 
         {/* Navigation Links */}
-        <nav className="flex-1 space-y-1 overflow-y-auto no-scrollbar">
+        <nav className="flex-1 space-y-2 overflow-y-auto no-scrollbar pb-4">
           {menuItems.map((item) => (
             <button
               key={item.name}
-              onClick={() => setActiveTab(item.name)}
+              onClick={() => {
+                setActiveTab(item.name);
+                if(window.innerWidth < 1024) setIsOpen(false); 
+              }}
               className={`
-                w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-200
+                group w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-300 ease-out
                 ${activeTab === item.name 
-                  ? 'bg-[#1a4d2e] text-white shadow-lg' 
-                  : 'text-gray-600 hover:bg-gray-50'}
+                  ? 'bg-[#1a4d2e] text-white shadow-lg translate-x-2' 
+                  : 'text-gray-600 hover:bg-[#e8f5e9] hover:text-[#1a4d2e] hover:translate-x-1'}
               `}
             >
               <div className="flex items-center gap-4">
-                {item.icon}
+                <div className={`transition-transform duration-300 ${activeTab === item.name ? 'scale-110' : 'group-hover:scale-110'}`}>
+                  {item.icon}
+                </div>
                 <span className="font-medium text-sm">{item.name}</span>
               </div>
               
               {item.badge && (
-                <span className="bg-orange-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full transition-colors duration-300
+                  ${activeTab === item.name ? 'bg-white text-[#1a4d2e]' : 'bg-orange-500 text-white group-hover:animate-pulse'}
+                `}>
                   {item.badge}
                 </span>
               )}
               
               {item.subtext && (
-                <span className="bg-gray-100 text-gray-600 text-[12px] px-2 py-0.5 rounded-md">
+                <span className={`text-[12px] px-2 py-0.5 rounded-md transition-colors duration-300
+                  ${activeTab === item.name ? 'bg-white/20 text-white' : 'bg-gray-100 text-gray-600'}
+                `}>
                   {item.subtext}
                 </span>
               )}
@@ -94,34 +116,36 @@ const Sidebar = () => {
         </nav>
 
         {/* Bottom AI Assistant Card */}
-        <div className="mt-6 bg-[#e8f5e9] rounded-2xl p-4 relative overflow-hidden">
-          <div className="relative z-10">
-            <h3 className="text-[#1a4d2e] font-bold text-sm">AI-Powered</h3>
-            <h3 className="text-[#1a4d2e] font-bold text-sm mb-1">Farming Assistant</h3>
-            <p className="text-[#1a4d2e] text-[10px] opacity-80 mb-4 max-w-[120px]">
-              Get accurate solutions for healthier crops
-            </p>
+        <div className="mt-auto pt-4 shrink-0">
+          <div className="bg-[#e8f5e9] rounded-2xl p-4 relative overflow-hidden group cursor-pointer transition-all duration-300 hover:shadow-md hover:-translate-y-1">
+            <div className="relative z-10">
+              <h3 className="text-[#1a4d2e] font-bold text-sm">AI-Powered</h3>
+              <h3 className="text-[#1a4d2e] font-bold text-sm mb-1">Farming Assistant</h3>
+              <p className="text-[#1a4d2e] text-[10px] opacity-80 mb-4 max-w-[120px]">
+                Get accurate solutions for healthier crops
+              </p>
+              
+              <button className="w-full bg-[#1a4d2e] text-white py-2 rounded-lg flex items-center justify-center gap-2 text-xs font-semibold transition-all duration-300 hover:bg-[#143a22] group-hover:gap-3">
+                Scan Now <ArrowRight size={14} className="transition-transform duration-300" />
+              </button>
+            </div>
             
-            <button className="w-full bg-[#1a4d2e] text-white py-2 rounded-lg flex items-center justify-center gap-2 text-xs font-semibold hover:bg-[#143a22] transition-colors">
-              Scan Now <ArrowRight size={14} />
-            </button>
-          </div>
-          
-          {/* Simple Illustration Placeholder (Matching the Farmer in Screenshot) */}
-          <div className="absolute right-[-10px] bottom-8 opacity-90">
-             <img 
-               src="https://cdn-icons-png.flaticon.com/512/1995/1995471.png" 
-               alt="Farmer" 
-               className="w-24 h-24 object-contain"
-             />
+            {/* Simple Illustration Placeholder */}
+            <div className="absolute right-[-10px] bottom-8 opacity-90 transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3">
+               <img 
+                 src="https://cdn-icons-png.flaticon.com/512/1995/1995471.png" 
+                 alt="Farmer" 
+                 className="w-24 h-24 object-contain drop-shadow-md"
+               />
+            </div>
           </div>
         </div>
       </aside>
 
-      {/* Overlay for mobile */}
+      {/* Overlay for mobile - z-index [60] to sit below sidebar but above background content */}
       {isOpen && (
         <div 
-          className="fixed inset-0 bg-black/20 z-30 lg:hidden"
+          className="fixed inset-0 bg-black/30 backdrop-blur-sm z-[60] lg:hidden transition-opacity duration-300"
           onClick={() => setIsOpen(false)}
         />
       )}

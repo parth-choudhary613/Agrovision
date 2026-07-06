@@ -45,13 +45,13 @@ const daysUntil = (dateStr) => {
 const StatusPill = ({ days }) => {
   if (days <= 2) {
     return (
-      <span className="bg-emerald-50 text-emerald-600 text-xs font-semibold px-3 py-1 rounded-full whitespace-nowrap">
+      <span className="bg-emerald-50 text-emerald-600 text-[10px] sm:text-xs font-semibold px-2.5 sm:px-3 py-1 rounded-full whitespace-nowrap">
         Due Soon
       </span>
     );
   }
   return (
-    <span className="bg-blue-50 text-blue-600 text-xs font-semibold px-3 py-1 rounded-full whitespace-nowrap">
+    <span className="bg-blue-50 text-blue-600 text-[10px] sm:text-xs font-semibold px-2.5 sm:px-3 py-1 rounded-full whitespace-nowrap">
       Upcoming
     </span>
   );
@@ -61,33 +61,33 @@ const SprayRow = ({ item, onMarkDone, isMarking }) => {
   const days = daysUntil(item.date);
   const dateLabel = new Date(item.date).toLocaleDateString("en-IN", {
     day: "numeric",
-    month: "long",
+    month: "short", // Changed to short for better mobile fit
     year: "numeric",
   });
   const daysLabel = days <= 0 ? "Today" : days === 1 ? "Tomorrow" : `In ${days} Days`;
 
   return (
-    <div className="flex items-start gap-3 py-4">
-      <div className="w-12 h-12 rounded-full bg-gray-50 flex items-center justify-center text-2xl flex-shrink-0">
+    <div className="flex items-start gap-2.5 sm:gap-3 py-3 sm:py-4">
+      <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gray-50 flex items-center justify-center text-xl sm:text-2xl flex-shrink-0">
         {getCropIcon(item.cropName)}
       </div>
       <div className="flex-1 min-w-0">
-        <p className="font-semibold text-gray-800 text-sm truncate">
+        <p className="font-semibold text-gray-800 text-sm sm:text-base truncate leading-tight">
           {item.cropName} {item.disease ? `– ${item.disease}` : ""}
         </p>
         {item.pesticide && (
-          <p className="text-sm text-gray-400 truncate">{item.pesticide}</p>
+          <p className="text-xs sm:text-sm text-gray-500 truncate mt-0.5">{item.pesticide}</p>
         )}
-        <p className="text-xs text-gray-400 mt-0.5 flex items-center gap-1">
-          <Calendar size={12} />
-          {daysLabel} &nbsp;·&nbsp; {dateLabel}
+        <p className="text-[10px] sm:text-xs text-gray-400 mt-1 flex items-center gap-1 font-medium">
+          <Calendar size={12} className="flex-shrink-0" />
+          <span className="truncate">{daysLabel} &nbsp;·&nbsp; {dateLabel}</span>
         </p>
-        <div className="flex items-center gap-2 mt-2">
+        <div className="flex flex-wrap items-center gap-2 mt-2 sm:mt-2.5">
           <button
             onClick={() => onMarkDone(item)}
             disabled={isMarking}
             title="Mark this spray as done"
-            className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full border border-purple-200 text-purple-600 hover:bg-purple-50 transition disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+            className="flex items-center gap-1.5 text-[10px] sm:text-xs font-semibold px-3 py-1.5 rounded-full border border-purple-200 text-purple-600 hover:bg-purple-50 transition-colors disabled:opacity-50 disabled:bg-transparent disabled:cursor-not-allowed whitespace-nowrap active:scale-95"
           >
             {isMarking ? <Loader2 size={13} className="animate-spin" /> : <CheckCircle2 size={13} />}
             Treatment Done
@@ -104,10 +104,6 @@ const UpcomingSpraysCard = ({ token, refreshKey, onTreatmentDone }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [showAll, setShowAll] = useState(false);
-  // Tracks sprayIds currently being marked done, so a row's button is
-  // disabled the instant it's clicked — this, combined with removing the
-  // row from `items` on success, is what prevents the same spray from
-  // ever bumping the "Treatments Done" metric more than once.
   const [markingIds, setMarkingIds] = useState(() => new Set());
 
   const fetchUpcoming = useCallback(async () => {
@@ -135,7 +131,6 @@ const UpcomingSpraysCard = ({ token, refreshKey, onTreatmentDone }) => {
   const handleMarkDone = useCallback(
     async (item) => {
       const key = `${item.treatmentId}-${item.sprayId}`;
-      // Already in-flight (or somehow already removed) — never double-fire.
       if (markingIds.has(key)) return;
 
       setMarkingIds((prev) => new Set(prev).add(key));
@@ -150,8 +145,6 @@ const UpcomingSpraysCard = ({ token, refreshKey, onTreatmentDone }) => {
         const data = await res.json();
         if (!data.success) throw new Error(data.error || "Failed to update spray status");
 
-        // Remove the now-completed spray from the visible list so it can
-        // never be clicked again, then bump the metric exactly once.
         setItems((prev) =>
           prev.filter((i) => `${i.treatmentId}-${i.sprayId}` !== key)
         );
@@ -172,13 +165,13 @@ const UpcomingSpraysCard = ({ token, refreshKey, onTreatmentDone }) => {
   const visibleItems = showAll ? items : items.slice(0, 3);
 
   return (
-    <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-6">
-      <div className="flex items-center justify-between mb-1">
-        <h2 className="text-lg font-bold text-gray-900">Upcoming Spray Reminders</h2>
+    <div className="bg-white rounded-2xl sm:rounded-3xl shadow-sm border border-gray-100 p-4 sm:p-6">
+      <div className="flex items-center justify-between mb-2 sm:mb-3">
+        <h2 className="text-base sm:text-lg font-bold text-gray-900 leading-tight">Upcoming Sprays</h2>
         {items.length > 3 && (
           <button
             onClick={() => setShowAll((s) => !s)}
-            className="text-sm font-semibold text-green-700 hover:text-green-800"
+            className="text-xs sm:text-sm font-semibold text-green-700 hover:text-green-800 transition-colors px-2 py-1 rounded-md hover:bg-green-50"
           >
             {showAll ? "Show Less" : "View All"}
           </button>
@@ -186,17 +179,17 @@ const UpcomingSpraysCard = ({ token, refreshKey, onTreatmentDone }) => {
       </div>
 
       {loading && (
-        <div className="py-8 text-center text-sm text-gray-400">Loading schedule…</div>
+        <div className="py-6 sm:py-8 text-center text-xs sm:text-sm text-gray-400">Loading schedule…</div>
       )}
 
       {!loading && error && (
-        <div className="py-8 text-center text-sm text-red-500">{error}</div>
+        <div className="py-6 sm:py-8 text-center text-xs sm:text-sm text-red-500 bg-red-50 rounded-xl">{error}</div>
       )}
 
       {!loading && !error && items.length === 0 && (
-        <div className="py-8 text-center">
-          <p className="text-sm text-gray-400">No sprays scheduled yet.</p>
-          <p className="text-xs text-gray-400 mt-1">
+        <div className="py-6 sm:py-8 text-center bg-gray-50/50 rounded-xl sm:rounded-2xl border border-dashed border-gray-200">
+          <p className="text-sm font-medium text-gray-600">No sprays scheduled yet.</p>
+          <p className="text-[10px] sm:text-xs text-gray-400 mt-1 max-w-[200px] sm:max-w-none mx-auto">
             Scan a crop, then tap "Add to Schedule" to plan your next spray.
           </p>
         </div>
