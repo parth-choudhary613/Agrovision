@@ -1,7 +1,3 @@
-// components/UpcomingSpraysCard.jsx
-// Dashboard card listing the next scheduled sprays, matching the
-// "Upcoming Spray Reminders" design: crop icon, disease + pesticide,
-// days-until + date, a "Treatment Done" action, and a status pill (Due Soon / Upcoming).
 import { useEffect, useState, useCallback } from "react";
 import { Calendar, CheckCircle2, Loader2 } from "lucide-react";
 
@@ -165,7 +161,7 @@ const UpcomingSpraysCard = ({ token, refreshKey, onTreatmentDone }) => {
   const visibleItems = showAll ? items : items.slice(0, 3);
 
   return (
-    <div className="bg-white rounded-2xl sm:rounded-3xl shadow-sm border border-gray-100 p-4 sm:p-6">
+    <div className="bg-white rounded-2xl lg:h-94 h-80 sm:rounded-3xl shadow-sm border border-gray-100 p-4 sm:p-6">
       <div className="flex items-center justify-between mb-2 sm:mb-3">
         <h2 className="text-base sm:text-lg font-bold text-gray-900 leading-tight">Upcoming Sprays</h2>
         {items.length > 3 && (
@@ -187,7 +183,7 @@ const UpcomingSpraysCard = ({ token, refreshKey, onTreatmentDone }) => {
       )}
 
       {!loading && !error && items.length === 0 && (
-        <div className="py-6 sm:py-8 text-center bg-gray-50/50 rounded-xl sm:rounded-2xl border border-dashed border-gray-200">
+        <div className="py-10 mt-16 sm:py-16 text-center bg-gray-50/50 rounded-xl sm:rounded-2xl border border-dashed border-green-400">
           <p className="text-sm font-medium text-gray-600">No sprays scheduled yet.</p>
           <p className="text-[10px] sm:text-xs text-gray-400 mt-1 max-w-[200px] sm:max-w-none mx-auto">
             Scan a crop, then tap "Add to Schedule" to plan your next spray.

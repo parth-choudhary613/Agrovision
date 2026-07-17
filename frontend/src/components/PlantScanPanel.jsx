@@ -1,8 +1,10 @@
 // components/PlantScanPanel.jsx
 import { useState, useRef, useEffect, useCallback } from "react";
-import { Upload, Camera, X, Leaf, AlertTriangle, CheckCircle, Calendar, FileText } from "lucide-react";
+import { Upload, Camera, X, Leaf, AlertTriangle, CheckCircle, Calendar, FileText, ShieldCheck, Sparkles, Image as ImageIcon } from "lucide-react";
 import ScanDetailsModal from "./ScanDetailsModal";
 import ScheduleCalendarModal from "./ScheduleCalenderModal";
+// import React from 'react';
+// import { DotLottieReact } from '@lottiefiles/dotlottie-react';
 
 const STORAGE_KEY = "agro_last_scan";
 
@@ -139,7 +141,7 @@ const PlantScanPanel = ({ token, onScanComplete, onSprayScheduled }) => {
     <div data-scan-panel className="w-full">
       {/* ── Camera ── */}
       {isCameraOpen && (
-        <div className="bg-white rounded-2xl sm:rounded-3xl border border-gray-100 shadow-sm overflow-hidden mb-6 max-w-2xl mx-auto">
+        <div className="bg-white rounded-2xl sm:rounded-3xl border border-gray-100 shadow-sm overflow-hidden mb-6 ">
           <div className="flex justify-between items-center px-4 sm:px-6 py-3 sm:py-4 border-b">
             <p className="font-bold text-base sm:text-lg">Camera</p>
             <button onClick={closeCamera} className="text-gray-400 hover:text-gray-600 p-1 rounded-full hover:bg-gray-100 transition-colors">
@@ -147,7 +149,6 @@ const PlantScanPanel = ({ token, onScanComplete, onSprayScheduled }) => {
             </button>
           </div>
           <div className="p-4 sm:p-6">
-            {/* ✅ FIXED: Added strict height and object-cover to video */}
             <video ref={videoRef} autoPlay playsInline className="w-full h-[300px] sm:h-[400px] object-cover rounded-xl sm:rounded-2xl bg-black" />
             <canvas ref={canvasRef} className="hidden" />
             <div className="flex flex-col sm:flex-row justify-center gap-3 sm:gap-4 mt-5 sm:mt-6">
@@ -162,39 +163,69 @@ const PlantScanPanel = ({ token, onScanComplete, onSprayScheduled }) => {
         </div>
       )}
 
-      {/* ── IDLE: two-column drag-drop + buttons ── */}
+      {/* ── IDLE: Redesigned Drag-Drop UI ── */}
       {!isCameraOpen && !preview && !result && (
-        <div className="bg-white rounded-2xl sm:rounded-3xl border border-gray-100 shadow-sm overflow-hidden max-w-2xl mx-auto">
-          <div className="flex flex-col md:flex-row">
-            <div
-              onDrop={handleDrop}
-              onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
-              onDragLeave={() => setDragOver(false)}
-              onClick={() => fileInputRef.current?.click()}
-              className={`flex-1 flex flex-col items-center justify-center p-6 sm:p-8 cursor-pointer transition-all border-dashed border-2 rounded-xl sm:rounded-3xl m-3 sm:m-4
-                ${dragOver ? "border-green-500 bg-green-50" : "border-gray-200 hover:border-green-400 hover:bg-green-50/30"}`}
-            >
-              <div className="w-12 h-12 sm:w-16 sm:h-16 bg-green-100 rounded-xl sm:rounded-2xl flex items-center justify-center mb-3 sm:mb-4">
-                <Leaf size={28} className="text-green-700 sm:w-[38px] sm:h-[38px]" />
+        <div className="bg-white rounded-[2rem] shadow-sm border border-gray-100 p-3 sm:p-5 w-full flex flex-col md:flex-row gap-6 md:gap-8 items-stretch">
+          
+          {/* Drag & Drop Area */}
+          <div
+            onDrop={handleDrop}
+            onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+            onDragLeave={() => setDragOver(false)}
+            onClick={() => fileInputRef.current?.click()}
+            className={`relative flex-1 w-full min-h-[280px] sm:min-h-[340px] rounded-3xl border-2 border-dashed overflow-hidden flex flex-col items-center justify-center p-6 cursor-pointer transition-all duration-200 ease-in-out
+              ${dragOver ? "border-green-500 bg-green-50/50" : "border-green-300 hover:border-green-400 bg-white"}`}
+          >
+            {/* Inner Content */}
+            <div className="z-10 flex flex-col items-center justify-center">
+              <div className="relative mb-5">
+                <div className="w-20 h-20 bg-[#eef8f0] rounded-full flex items-center justify-center">
+                  <Leaf size={36} strokeWidth={2.5} className="text-[#2e7d32]" />
+                </div>
+                <Sparkles size={20} className="absolute -top-1 -right-2 text-[#4ade80]" fill="currentColor" />
               </div>
-              <h3 className="text-base sm:text-lg font-bold text-gray-800 mb-1 text-center">Scan Your Plant</h3>
-              <p className="text-xs sm:text-sm text-gray-500 text-center max-w-[200px] sm:max-w-none">Drag & drop your photo here or tap to upload</p>
-              <p className="text-[10px] sm:text-xs text-gray-400 mt-2 sm:mt-3">JPG, PNG, WEBP • Max 5MB</p>
+              
+              <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2 text-center tracking-tight">Scan Your Plant</h3>
+              <p className="text-sm sm:text-base text-gray-500 text-center mb-6 max-w-[260px]">
+                Drag & drop your photo here or tap to upload
+              </p>
+              
+              <div className="flex items-center gap-2 bg-[#f3f4f6] text-gray-600 px-4 py-2 rounded-full text-xs sm:text-sm font-medium">
+                <ImageIcon size={14} className="opacity-70" />
+                <span>JPG, PNG, WEBP • Max 5MB</span>
+              </div>
             </div>
-            
-            <div className="flex flex-col w-full md:w-auto items-center justify-center gap-3 p-5 sm:p-6 md:py-8 border-t md:border-t-0 md:border-l border-gray-100 bg-gray-50/50">
-              <button
-                onClick={() => fileInputRef.current?.click()}
-                className="w-full sm:max-w-sm md:w-44 flex justify-center items-center gap-2 bg-green-700 hover:bg-green-800 text-white px-5 py-3 rounded-xl sm:rounded-2xl font-semibold shadow-sm transition-all"
-              >
-                <Upload size={17} /> Choose File
-              </button>
-              <button
-                onClick={openCamera}
-                className="w-full sm:max-w-sm md:w-44 flex justify-center items-center gap-2 bg-white border border-gray-300 hover:border-gray-400 hover:bg-gray-50 px-5 py-3 rounded-xl sm:rounded-2xl font-semibold shadow-sm transition-all"
-              >
-                <Camera size={17} /> Open Camera
-              </button>
+
+            {/* Decorative Landscape SVG Background */}
+            <div className="absolute bottom-0 left-0 w-full h-24 sm:h-32 pointer-events-none opacity-80">
+         
+    
+            </div>
+          </div>
+          
+          {/* Action Buttons & Info */}
+          <div className="flex flex-col md:w-[280px] gap-4 md:pr-4">
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              className="w-full flex justify-center items-center gap-2 bg-[#166534] hover:bg-[#14532d] text-white px-6 py-4 rounded-xl sm:rounded-2xl font-semibold shadow-sm transition-all active:scale-[0.98]"
+            >
+              <Upload size={18} /> Choose File
+            </button>
+            <button
+              onClick={openCamera}
+              className="w-full flex justify-center items-center gap-2 bg-white border border-gray-200 hover:border-gray-300 hover:bg-gray-50 text-gray-800 px-6 py-4 rounded-xl sm:rounded-2xl font-semibold shadow-sm transition-all active:scale-[0.98]"
+            >
+              <Camera size={18} /> Open Camera
+            </button>
+
+            <div className="mt-4 flex items-start gap-3 p-2">
+              <ShieldCheck size={24} className="text-[#166534] shrink-0 mt-0.5" strokeWidth={2} />
+              <div className="flex flex-col">
+                <span className="text-sm font-bold text-[#166534]">Secure & Private</span>
+                <span className="text-xs sm:text-sm text-gray-500 leading-snug mt-0.5">
+                  Your data is safe and used only for analysis.
+                </span>
+              </div>
             </div>
           </div>
         </div>
@@ -239,15 +270,12 @@ const PlantScanPanel = ({ token, onScanComplete, onSprayScheduled }) => {
           </div>
 
           <div className="flex flex-col lg:flex-row">
-          {/* Plant image */}
-         {/* Plant image */}
             <div className="w-full lg:w-5/12 p-3 sm:p-5 border-b lg:border-b-0 lg:border-r border-gray-100 bg-gray-50/30 flex items-center justify-center">
               {preview && (
                 <img src={preview} alt="Scanned Plant" className="w-full h-56 sm:h-72 lg:h-[340px] object-cover rounded-xl sm:rounded-2xl shadow-sm border border-gray-200/60" />
               )}
             </div>
 
-            {/* Details */}
             <div className="w-full lg:w-7/12 p-4 sm:p-6 space-y-4 sm:space-y-5">
               <div className="flex items-start justify-between gap-3">
                 <div className="flex-1 min-w-0">

@@ -39,9 +39,7 @@ const Navbar = () => {
 
   return (
     <nav className="bg-gray-950 border-b border-green-800 px-8 py-4 flex justify-between items-center sticky top-0 z-50">
-      <div className="flex items-center gap-3">
-        <div className="text-2xl font-bold text-white">AgroVision</div>
-      </div>
+    
 
       {/* Show username & logout ONLY when logged in AND not on signup page */}
       {isLoggedIn && !isSignupPage && (

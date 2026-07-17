@@ -65,7 +65,7 @@ const Sidebar = () => {
         {/* Logo Section */}
         <div className="flex items-center gap-3 mb-10 group cursor-pointer shrink-0">
           <div className="text-[#4caf50] transition-transform duration-300 group-hover:rotate-12 group-hover:scale-110">
-            <Sprout size={40} fill="currentColor" />
+            <Sprout size={80} fill="currentColor" />
           </div>
           <div>
             <h1 className="text-2xl font-bold text-[#1a4d2e] leading-tight">AgroVision</h1>
@@ -114,32 +114,6 @@ const Sidebar = () => {
             </button>
           ))}
         </nav>
-
-        {/* Bottom AI Assistant Card */}
-        <div className="mt-auto pt-4 shrink-0">
-          <div className="bg-[#e8f5e9] rounded-2xl p-4 relative overflow-hidden group cursor-pointer transition-all duration-300 hover:shadow-md hover:-translate-y-1">
-            <div className="relative z-10">
-              <h3 className="text-[#1a4d2e] font-bold text-sm">AI-Powered</h3>
-              <h3 className="text-[#1a4d2e] font-bold text-sm mb-1">Farming Assistant</h3>
-              <p className="text-[#1a4d2e] text-[10px] opacity-80 mb-4 max-w-[120px]">
-                Get accurate solutions for healthier crops
-              </p>
-              
-              <button className="w-full bg-[#1a4d2e] text-white py-2 rounded-lg flex items-center justify-center gap-2 text-xs font-semibold transition-all duration-300 hover:bg-[#143a22] group-hover:gap-3">
-                Scan Now <ArrowRight size={14} className="transition-transform duration-300" />
-              </button>
-            </div>
-            
-            {/* Simple Illustration Placeholder */}
-            <div className="absolute right-[-10px] bottom-8 opacity-90 transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3">
-               <img 
-                 src="https://cdn-icons-png.flaticon.com/512/1995/1995471.png" 
-                 alt="Farmer" 
-                 className="w-24 h-24 object-contain drop-shadow-md"
-               />
-            </div>
-          </div>
-        </div>
       </aside>
 
       {/* Overlay for mobile - z-index [60] to sit below sidebar but above background content */}

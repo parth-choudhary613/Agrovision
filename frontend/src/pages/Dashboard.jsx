@@ -189,22 +189,7 @@ const Dashboard = () => {
   </div>
 
   {/* Right Section: Actions */}
-  <div className="flex items-center gap-1.5 sm:gap-3 lg:gap-4 flex-shrink-0">
-    
-    {/* Language Selector (Hidden on Mobile) */}
-    <button className="hidden md:flex items-center gap-1.5 border border-gray-200 rounded-lg px-3 py-2 cursor-pointer hover:bg-gray-50 hover:border-gray-300 transition-colors focus:outline-none focus:ring-2 focus:ring-green-500/20">
-      <Languages size={16} className="text-gray-500" />
-      <span className="font-medium text-gray-700 text-sm">English</span>
-      <ChevronDown size={14} className="text-gray-400" />
-    </button>
-
-    {/* Notification Bell */}
-    <button className="relative p-2 rounded-full hover:bg-gray-100 transition-colors focus:outline-none">
-      <Bell size={20} className="text-gray-600 sm:w-5 sm:h-5 w-4 h-4" />
-      <span className="absolute top-1 sm:top-1.5 right-1 sm:right-1.5 bg-red-500 text-white text-[10px] w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full flex items-center justify-center font-bold ring-2 ring-white">
-        3
-      </span>
-    </button>
+  <div className="flex items-center gap-1.5 sm:gap-3 lg:gap-4 flex-shrink:0">
 
     {/* User Profile */}
     {isLoggedIn && !isSignup && (
@@ -214,7 +199,7 @@ const Dashboard = () => {
           className="flex items-center gap-2 p-1 sm:px-2.5 sm:py-1.5 rounded-full sm:rounded-xl hover:bg-gray-100 transition-colors focus:outline-none"
         >
           {/* Ensure Avatar component accepts className or wrap it in a size-constrained div */}
-          <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-full overflow-hidden flex-shrink-0">
+          <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-full overflow-hidden flex-shrink:0">
              <Avatar size="sm" />
           </div>
           
