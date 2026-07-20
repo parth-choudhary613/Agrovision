@@ -26,9 +26,7 @@ const Sidebar = () => {
     { name: 'Spray Scheduler', icon: <Droplets size={20} /> },
     { name: 'Weather Advisory', icon: <CloudSun size={20} /> },
     { name: 'History & Reports', icon: <FileText size={20} /> },
-    { name: 'Notifications', icon: <Bell size={20} />, badge: 3 },
     { name: 'Knowledge Base', icon: <BookOpen size={20} /> },
-    { name: 'Language', icon: <Globe size={20} />, subtext: 'हिंदी' },
     { name: 'Profile', icon: <User size={20} /> },
   ];
 

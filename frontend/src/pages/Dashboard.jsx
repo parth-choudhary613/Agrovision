@@ -12,7 +12,7 @@ import {
   Languages,
   Plus,
 } from "lucide-react";
-// import PlantScanPanel from "../components/PlantScanPanel";
+import Footer from "../components/Footer";
 
 const Dashboard = () => {
   const [username, setUsername] = useState("");
@@ -279,6 +279,7 @@ const Dashboard = () => {
 
         {/* ── NEW: Weather-Based Spray Advisory — sits below the disease result section, fully self-contained ── */}
         <WeatherAdvisory />
+        <Footer/>
       </div>
     </div>
   );

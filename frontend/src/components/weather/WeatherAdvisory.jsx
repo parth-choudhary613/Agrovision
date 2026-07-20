@@ -4,6 +4,7 @@ import { MapPin, RefreshCw, AlertCircle, CloudOff, CloudSunRain } from 'lucide-r
 import WeatherCard from './WeatherCard';
 import SprayScore from './SprayScore';
 import LottieImport from 'lottie-react';
+import locationSvg from "../../assets/location.svg";
 import locationAnimation from '../../assets/Plantlottie.json';
 import { fetchSprayAdvisory, getCurrentPosition } from '../../services/weatherApi';
 
@@ -61,74 +62,83 @@ const WeatherAdvisory = () => {
   const handleRefresh = () => {
     if (coords) loadAdvisory(coords.lat, coords.lon);
   };
-// console.log(Lottie);
-// console.log(typeof Lottie);
+
   return (
-    <div className="mt-8 mb-8">
+    <div className="mt-8 mb-8 w-full">
       {!advisory && !loading && (
-    <div className="relative overflow-hidden rounded-[32px] shadow-sm border border-gray-100 p-8 text-center max-w-full">
+        <div className="relative overflow-hidden rounded-[32px] shadow-sm border border-gray-100 p-8 sm:p-12 bg-amber-50 text-center w-full min-h-[350px] flex flex-col justify-center items-center">
+          
+          {/* Responsive Background Image */}
+          <img
+            src={locationSvg}
+            alt="Location Background"
+            className="absolute inset-0 w-full h-full object-cover z-0 pointer-events-none"
+          />
+
+          {/* Optional Overlay to ensure text readability (if SVG is too bright/busy) */}
+          <div className="absolute inset-0 bg-white/40 z-0 pointer-events-none"></div>
 
           {/* Decorative Lottie Background */}
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-10 z-0">
-            <Lottie animationData={locationAnimation} loop autoplay className="w-72 h-72" />
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0">
           </div>
 
-          <div className="relative z-10">
-          <MapPin className="mx-auto text-green-600 mb-3" size={32} />
-          <p className="text-gray-600 font-medium mb-4">
-            Enable location access to get a spray advisory for your field.
-          </p>
-          <button
-            onClick={handleUseMyLocation}
-            className="bg-green-700 hover:bg-green-800 text-white px-6 py-3 rounded-2xl font-semibold inline-flex items-center gap-2 transition"
-          >
-            <MapPin size={16} />
-            Use My Location
-          </button>
-
-          <div className="mt-4">
+          {/* Foreground Content */}
+          <div className="relative z-10 w-full max-w-md mx-auto">
+            <MapPin className="mx-auto text-green-600 mb-3 drop-shadow-sm" size={32} />
+            <p className="text-gray-800 font-medium mb-6 text-base sm:text-lg drop-shadow-sm">
+              Enable location access to get a spray advisory for your field.
+            </p>
             <button
-              onClick={() => setShowManualEntry((v) => !v)}
-              className="text-sm text-gray-400 hover:text-gray-600 underline underline-offset-2"
+              onClick={handleUseMyLocation}
+              className="bg-green-700 hover:bg-green-800 text-white px-6 py-3 rounded-2xl font-semibold inline-flex items-center gap-2 transition shadow-md"
             >
-              {showManualEntry ? 'Hide manual entry' : 'Enter coordinates manually instead'}
+              <MapPin size={16} />
+              Use My Location
             </button>
-          </div>
 
-          {showManualEntry && (
-            <form onSubmit={handleManualSubmit} className="mt-4 flex flex-col sm:flex-row gap-2 justify-center max-w-md mx-auto">
-              <input
-                type="number" step="any" placeholder="Latitude" value={manualLat}
-                onChange={(e) => setManualLat(e.target.value)}
-                className="border border-gray-200 rounded-xl px-3 py-2 text-sm w-full sm:w-32 focus:outline-none focus:ring-2 focus:ring-green-500"
-              />
-              <input
-                type="number" step="any" placeholder="Longitude" value={manualLon}
-                onChange={(e) => setManualLon(e.target.value)}
-                className="border border-gray-200 rounded-xl px-3 py-2 text-sm w-full sm:w-32 focus:outline-none focus:ring-2 focus:ring-green-500"
-              />
+            <div className="mt-6">
               <button
-                type="submit"
-                className="bg-gray-800 hover:bg-gray-900 text-white px-4 py-2 rounded-xl text-sm font-semibold transition"
+                onClick={() => setShowManualEntry((v) => !v)}
+                className="text-sm text-gray-600 hover:text-gray-900 underline underline-offset-2 font-medium"
               >
-                Get Advisory
+                {showManualEntry ? 'Hide manual entry' : 'Enter coordinates manually instead'}
               </button>
-            </form>
-          )}
-
-          {error && (
-            <div className="mt-4 flex items-center justify-center gap-2 text-red-500 text-sm">
-              <AlertCircle size={15} />
-              {error}
             </div>
-          )}
+
+            {showManualEntry && (
+              <form onSubmit={handleManualSubmit} className="mt-5 flex flex-col sm:flex-row gap-2 justify-center w-full">
+                <input
+                  type="number" step="any" placeholder="Latitude" value={manualLat}
+                  onChange={(e) => setManualLat(e.target.value)}
+                  className="border border-gray-200 rounded-xl px-4 py-2.5 text-sm w-full sm:w-1/2 focus:outline-none focus:ring-2 focus:ring-green-500 shadow-sm"
+                />
+                <input
+                  type="number" step="any" placeholder="Longitude" value={manualLon}
+                  onChange={(e) => setManualLon(e.target.value)}
+                  className="border border-gray-200 rounded-xl px-4 py-2.5 text-sm w-full sm:w-1/2 focus:outline-none focus:ring-2 focus:ring-green-500 shadow-sm"
+                />
+                <button
+                  type="submit"
+                  className="bg-gray-800 hover:bg-gray-900 text-white px-5 py-2.5 rounded-xl text-sm font-semibold transition shadow-sm w-full sm:w-auto"
+                >
+                  Get Advisory
+                </button>
+              </form>
+            )}
+
+            {error && (
+              <div className="mt-4 flex items-center justify-center gap-2 text-red-600 bg-red-50/90 py-2 px-4 rounded-xl text-sm font-medium">
+                <AlertCircle size={15} />
+                {error}
+              </div>
+            )}
           </div>
         </div>
       )}
 
       {/* ── Loading state ───────────────────────────────────────────────── */}
       {loading && (
-        <div className="bg-white rounded-[32px] shadow-sm border border-gray-100 p-10 flex flex-col items-center gap-4 max-w-2xl">
+        <div className="bg-white rounded-[32px] shadow-sm border border-gray-100 p-10 flex flex-col items-center gap-4 max-w-2xl mx-auto">
           <div className="w-12 h-12 border-4 border-green-500 border-t-transparent rounded-full animate-spin" />
           <p className="text-gray-500 font-medium">Fetching live weather data...</p>
         </div>
@@ -136,7 +146,7 @@ const WeatherAdvisory = () => {
 
       {/* ── Error state (after a previous successful load, or manual retry) ── */}
       {error && !loading && advisory === null && coords && (
-        <div className="bg-red-50 border border-red-100 rounded-3xl p-6 flex items-center gap-3 max-w-2xl">
+        <div className="bg-red-50 border border-red-100 rounded-3xl p-6 flex items-center gap-3 w-full">
           <CloudOff className="text-red-500 flex-shrink-0" size={22} />
           <div>
             <p className="text-red-700 font-semibold text-sm">Could not load weather advisory</p>
