@@ -1,5 +1,5 @@
 import { BrowserRouter as Router, Routes, Route, Outlet } from 'react-router-dom';
-import Navbar from './components/Navbar';
+// import Navbar from './components/Navbar';
 import Sidebar from './components/Sidebar';
 import Signup from './pages/Signup';
 import Dashboard from './pages/Dashboard';
@@ -26,12 +26,10 @@ function App() {
       <Routes>
         {/* Public Route: No Navbar or Sidebar here */}
         <Route path="/" element={<Signup />} />
-
         {/* Protected Routes: Only accessible after login */}
         <Route element={<PrivateRoute />}>
           <Route element={<DashboardLayout />}>
             <Route path="/dashboard" element={<Dashboard />} />
-            {/* Add other protected routes here, like /crops or /weather */}
           </Route>
         </Route>
       </Routes>

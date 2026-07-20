@@ -3,8 +3,12 @@ import React, { useState, useCallback } from 'react';
 import { MapPin, RefreshCw, AlertCircle, CloudOff, CloudSunRain } from 'lucide-react';
 import WeatherCard from './WeatherCard';
 import SprayScore from './SprayScore';
-import Locationsvg from "./PlantScan.json";
+import LottieImport from 'lottie-react';
+import locationAnimation from '../../assets/Plantlottie.json';
 import { fetchSprayAdvisory, getCurrentPosition } from '../../services/weatherApi';
+
+// See PlantScanPanel.jsx for why this unwrap is needed (Vite/rolldown UMD interop quirk).
+const Lottie = LottieImport.default || LottieImport;
 
 const WeatherAdvisory = () => {
   const [loading, setLoading] = useState(false);
@@ -57,24 +61,19 @@ const WeatherAdvisory = () => {
   const handleRefresh = () => {
     if (coords) loadAdvisory(coords.lat, coords.lon);
   };
-
+// console.log(Lottie);
+// console.log(typeof Lottie);
   return (
-    <div className="relative mt-8 mb-8 overflow-hidden">
-      
-      {/* ── Initial state: prompt for location ─────────────────────────── */}
-       <div className="absolute inset-0 -z-10 opacity-20 pointer-events-none">
-     <Lottie
-          animationData={Locationsvg}   // ← This should now work
-          loop={true}
-          autoplay={true}
-          className="w-full h-full"
-          // Optional: Add these for better control
-          // speed={0.8}
-          // style={{ width: '100%', height: '100%' }}
-        />
-    </div> 
+    <div className="mt-8 mb-8">
       {!advisory && !loading && (
-    <div className="bg-white rounded-[32px] shadow-sm border border-gray-100 p-8 text-center max-w-full">
+    <div className="relative overflow-hidden rounded-[32px] shadow-sm border border-gray-100 p-8 text-center max-w-full">
+
+          {/* Decorative Lottie Background */}
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-10 z-0">
+            <Lottie animationData={locationAnimation} loop autoplay className="w-72 h-72" />
+          </div>
+
+          <div className="relative z-10">
           <MapPin className="mx-auto text-green-600 mb-3" size={32} />
           <p className="text-gray-600 font-medium mb-4">
             Enable location access to get a spray advisory for your field.
@@ -123,6 +122,7 @@ const WeatherAdvisory = () => {
               {error}
             </div>
           )}
+          </div>
         </div>
       )}
 

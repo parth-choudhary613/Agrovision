@@ -119,16 +119,16 @@ const UpcomingSpraysCard = ({ token, refreshKey, onTreatmentDone }) => {
       setLoading(false);
     }
   }, [token]);
-
+  
   useEffect(() => {
     fetchUpcoming();
   }, [fetchUpcoming, refreshKey]);
-
+  
   const handleMarkDone = useCallback(
     async (item) => {
       const key = `${item.treatmentId}-${item.sprayId}`;
       if (markingIds.has(key)) return;
-
+      
       setMarkingIds((prev) => new Set(prev).add(key));
       try {
         const res = await fetch(
@@ -143,13 +143,13 @@ const UpcomingSpraysCard = ({ token, refreshKey, onTreatmentDone }) => {
 
         setItems((prev) =>
           prev.filter((i) => `${i.treatmentId}-${i.sprayId}` !== key)
-        );
-        if (onTreatmentDone) onTreatmentDone();
-      } catch (e) {
-        alert(e.message || "Failed to mark treatment as done. Please try again.");
-      } finally {
-        setMarkingIds((prev) => {
-          const next = new Set(prev);
+      );
+      if (onTreatmentDone) onTreatmentDone();
+    } catch (e) {
+      alert(e.message || "Failed to mark treatment as done. Please try again.");
+    } finally {
+      setMarkingIds((prev) => {
+        const next = new Set(prev);
           next.delete(key);
           return next;
         });
@@ -159,7 +159,7 @@ const UpcomingSpraysCard = ({ token, refreshKey, onTreatmentDone }) => {
   );
 
   const visibleItems = showAll ? items : items.slice(0, 3);
-
+  
   return (
     <div className="bg-white rounded-2xl lg:h-94 h-80 sm:rounded-3xl shadow-sm border border-gray-100 p-4 sm:p-6">
       <div className="flex items-center justify-between mb-2 sm:mb-3">
@@ -168,7 +168,7 @@ const UpcomingSpraysCard = ({ token, refreshKey, onTreatmentDone }) => {
           <button
             onClick={() => setShowAll((s) => !s)}
             className="text-xs sm:text-sm font-semibold text-green-700 hover:text-green-800 transition-colors px-2 py-1 rounded-md hover:bg-green-50"
-          >
+            >
             {showAll ? "Show Less" : "View All"}
           </button>
         )}
