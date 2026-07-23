@@ -1,21 +1,31 @@
-import { BrowserRouter as Router, Routes, Route, Outlet } from 'react-router-dom';
-// import Navbar from './components/Navbar';
-import Sidebar from './components/Sidebar';
-import Signup from './pages/Signup';
-import Dashboard from './pages/Dashboard';
-import PrivateRoute from './components/PrivateRoute';
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Outlet,
+} from "react-router-dom";
+import Sidebar from "./components/Sidebar";
+import Signup from "./pages/Signup";
+import Dashboard from "./pages/Dashboard";
+import DiseaseDetectionPage from "./pages/DiseaseDetectionPage";
+import MyCropsPage from "./pages/MyCropsPage";
+import SpraySchedulerPage from "./pages/SpraySchedulerPage";
+import WeatherPage from "./pages/WeatherPage";
+import HistoryReportsPage from "./pages/HistoryReportsPage";
+import KnowledgeBasePage from "./pages/KnowledgeBasePage";
+import ProfilePage from "./pages/ProfilePage";
+import PrivateRoute from "./components/PrivateRoute";
 
-// A Layout component to wrap protected content with the navigation
 const DashboardLayout = () => {
   return (
-    <div className="flex">
+    <div className="min-h-screen bg-gray-50">
+      {/* Fixed Sidebar */}
       <Sidebar />
-      <div className="flex-1">
-        {/* <Navbar /> */}
-        <main className="p-6">
-          <Outlet /> {/* This renders the specific page like Dashboard */}
-        </main>
-      </div>
+
+      {/* Main Content */}
+      <main className="min-h-screen p-6 lg:ml-72">
+        <Outlet />
+      </main>
     </div>
   );
 };
@@ -24,12 +34,21 @@ function App() {
   return (
     <Router>
       <Routes>
-        {/* Public Route: No Navbar or Sidebar here */}
         <Route path="/" element={<Signup />} />
-        {/* Protected Routes: Only accessible after login */}
+
         <Route element={<PrivateRoute />}>
           <Route element={<DashboardLayout />}>
             <Route path="/dashboard" element={<Dashboard />} />
+            <Route
+              path="/disease-detection"
+              element={<DiseaseDetectionPage />}
+            />
+            <Route path="/my-crops" element={<MyCropsPage />} />
+            <Route path="/spray-scheduler" element={<SpraySchedulerPage />} />
+            <Route path="/weather-advisory" element={<WeatherPage />} />
+            <Route path="/history-reports" element={<HistoryReportsPage />} />
+            <Route path="/knowledge-base" element={<KnowledgeBasePage />} />
+            <Route path="/profile" element={<ProfilePage />} />
           </Route>
         </Route>
       </Routes>

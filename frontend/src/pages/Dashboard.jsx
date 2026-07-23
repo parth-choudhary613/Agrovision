@@ -174,7 +174,7 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#f5f5f5] lg:ml-72">
+    <div className="min-h-screen bg-[#f5f5f5] ">
       {/* NAVBAR */}
      <div className="w-full bg-white border-b border-gray-100 px-4 sm:px-6 lg:px-8 py-3 sm:py-4 lg:py-5 flex items-center justify-between gap-3 sm:gap-4 relative z-40">
   
