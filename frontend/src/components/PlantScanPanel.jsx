@@ -134,7 +134,7 @@ const PlantScanPanel = ({ token, onScanComplete, onSprayScheduled }) => {
     fd.append("image", selectedFile);
 
     try {
-      const r = await fetch("http://localhost:5000/api/scan", {
+      const r = await fetch("https://agrovision-bfjf.onrender.com/api/scan", {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
         body: fd,

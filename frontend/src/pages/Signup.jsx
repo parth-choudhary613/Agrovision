@@ -39,7 +39,7 @@ const Signup = () => {
 
             // Send credential + decoded fields to backend
             // Backend should store name and picture and return them in /api/auth/me
-            const res = await axios.post('http://localhost:5000/api/auth/google', {
+            const res = await axios.post('https://agrovision-bfjf.onrender.com/api/auth/google', {
               credential: response.credential,
               name: payload.name,       // Full name from Google
               picture: payload.picture, // Profile picture URL from Google
@@ -120,7 +120,7 @@ const sendOTP = async () => {
     try {
       const result = await confirmationResult.confirm(otp);
       // Phone login: send username and phone. No picture — backend stores empty string.
-      const res = await axios.post('http://localhost:5000/api/auth/phone', {
+      const res = await axios.post('https://agrovision-bfjf.onrender.com/api/auth/phone', {
         username,
         phone: result.user.phoneNumber,
       });

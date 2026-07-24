@@ -70,7 +70,7 @@ const ScheduleCalendarModal = ({ result, scanId, token, onClose, onScheduled }) 
     setSaving(true);
     setError("");
     try {
-      const res = await fetch("http://localhost:5000/api/treatment", {
+      const res = await fetch("https://agrovision-bfjf.onrender.com/api/treatment", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

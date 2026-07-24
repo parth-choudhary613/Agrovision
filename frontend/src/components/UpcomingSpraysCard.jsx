@@ -107,7 +107,7 @@ const UpcomingSpraysCard = ({ token, refreshKey, onTreatmentDone }) => {
     setLoading(true);
     setError("");
     try {
-      const res = await fetch("http://localhost:5000/api/treatment/upcoming?limit=20", {
+      const res = await fetch("https://agrovision-bfjf.onrender.com/api/treatment/upcoming?limit=20", {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
@@ -132,7 +132,7 @@ const UpcomingSpraysCard = ({ token, refreshKey, onTreatmentDone }) => {
       setMarkingIds((prev) => new Set(prev).add(key));
       try {
         const res = await fetch(
-          `http://localhost:5000/api/treatment/${item.treatmentId}/spray/${item.sprayId}`,
+          `https://agrovision-bfjf.onrender.com/api/treatment/${item.treatmentId}/spray/${item.sprayId}`,
           {
             method: "PATCH",
             headers: { Authorization: `Bearer ${token}` },

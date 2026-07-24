@@ -67,7 +67,7 @@ const ScanCrop = forwardRef((props, ref) => {
     formData.append('image', selectedImage);
     try {
       const token = localStorage.getItem('token');
-      const res   = await fetch('http://localhost:5000/api/scan', {
+      const res   = await fetch('https://agrovision-bfjf.onrender.com/api/scan', {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
         body: formData,

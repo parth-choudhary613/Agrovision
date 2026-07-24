@@ -9,7 +9,7 @@
 
 // Uses the same backend origin convention as the rest of the app
 // (see ScanCrop.jsx / PlantScanPanel.jsx which call http://localhost:5000 directly).
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://agrovision-bfjf.onrender.com';
 
 /**
  * Fetch the full spray advisory (weather + sprayScore + recommendation +

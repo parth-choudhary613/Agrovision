@@ -15,7 +15,7 @@ const Navbar = () => {
     const token = localStorage.getItem('token');
     
     if (token && !isSignupPage) {
-      axios.get('http://localhost:5000/api/auth/me', {
+      axios.get('https://agrovision-bfjf.onrender.com/api/auth/me', {
         headers: { Authorization: `Bearer ${token}` }
       })
       .then(res => {

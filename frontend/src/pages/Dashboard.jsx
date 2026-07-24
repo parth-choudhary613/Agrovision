@@ -54,7 +54,7 @@ const Dashboard = () => {
       const tok = t || token;
       if (!tok) return;
       axios
-        .get("http://localhost:5000/api/scan/stats", {
+        .get("https://agrovision-bfjf.onrender.com/api/scan/stats", {
           headers: { Authorization: `Bearer ${tok}` },
         })
         .then((r) => {
@@ -82,7 +82,7 @@ const Dashboard = () => {
     }
     setToken(t);
     axios
-      .get("http://localhost:5000/api/auth/me", {
+      .get("https://agrovision-bfjf.onrender.com/api/auth/me", {
         headers: { Authorization: `Bearer ${t}` },
       })
       .then((r) => {
