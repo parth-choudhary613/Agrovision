@@ -30,6 +30,7 @@ const Signup = () => {
     script.src = "https://accounts.google.com/gsi/client";
     script.async = true;
     script.onload = () => {
+       console.log("Google Client ID:", import.meta.env.VITE_GOOGLE_CLIENT_ID);
       window.google.accounts.id.initialize({
         client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
         callback: async (response) => {
