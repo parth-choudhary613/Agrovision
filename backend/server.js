@@ -11,6 +11,7 @@ const app = express();
 // Middleware — allow your Vercel frontend + local dev
 app.use(cors({
   origin: [
+    'https://agrovision-beige-eta.vercel.app',
     'https://agrovision-mtl.vercel.app',
     'http://localhost:5173',
     'http://localhost:3000',
