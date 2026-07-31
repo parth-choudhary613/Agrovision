@@ -8,16 +8,24 @@ connectDB();
 
 const app = express();
 
-// Middleware
-app.use(cors());
+// Middleware — allow your Vercel frontend + local dev
+app.use(cors({
+  origin: [
+    'https://agrovision-mtl.vercel.app',
+    'http://localhost:5173',
+    'http://localhost:3000',
+  ],
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+}));
+
 app.use(express.json());
 
 // Routes
 app.use('/api/auth', require('./routes/auth'));
-app.use('/api/scan', require('./routes/scan'));        // ← Added
-app.use('/api/treatment', require('./routes/treatment')); // ← Spray scheduling + upcoming sprays
-app.use('/api/weather', require('./routes/weatherRoutes')); // ← NEW: Weather-Based Spray Advisory (isolated module)
-//app.use('/api/dashboard', require('./routes/dashboard'));  // You can add later
+app.use('/api/scan', require('./routes/scan'));
+app.use('/api/treatment', require('./routes/treatment'));
+app.use('/api/weather', require('./routes/weatherRoutes'));
 
 // Test Route
 app.get('/', (req, res) => {
@@ -25,6 +33,6 @@ app.get('/', (req, res) => {
 });
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => 
+app.listen(PORT, () =>
   console.log(`🚀 Server running on port ${PORT}`)
 );
