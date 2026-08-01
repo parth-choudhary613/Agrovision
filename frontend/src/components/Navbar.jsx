@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import axios from 'axios';
+const API_URL = import.meta.env.VITE_API_URL;
 
 const Navbar = () => {
   const [username, setUsername] = useState('');
@@ -15,7 +16,7 @@ const Navbar = () => {
     const token = localStorage.getItem('token');
     
     if (token && !isSignupPage) {
-      axios.get('https://agrovision-bfjf.onrender.com/api/auth/me', {
+      axios.get(`${API_URL}/api/auth/user`, {
         headers: { Authorization: `Bearer ${token}` }
       })
       .then(res => {

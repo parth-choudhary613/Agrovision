@@ -1,4 +1,5 @@
 import React, { useState, useRef, forwardRef, useImperativeHandle } from 'react';
+const API_URL = import.meta.env.VITE_API_URL;
 
 const ScanCrop = forwardRef((props, ref) => {
   const [selectedImage, setSelectedImage] = useState(null);
@@ -67,7 +68,7 @@ const ScanCrop = forwardRef((props, ref) => {
     formData.append('image', selectedImage);
     try {
       const token = localStorage.getItem('token');
-      const res   = await fetch('https://agrovision-bfjf.onrender.com/api/scan', {
+      const res   = await fetch(`${API_URL}/api/scan`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
         body: formData,

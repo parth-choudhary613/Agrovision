@@ -5,14 +5,10 @@ import DashboardMetrics from "../components/DashboardMetrics";
 import PlantScanPanel from "../components/PlantScanPanel";
 import UpcomingSpraysCard from "../components/UpcomingSpraysCard";
 import WeatherAdvisory from "../components/weather/WeatherAdvisory"; // ← NEW: Weather-Based Spray Advisory (isolated module)
-
-import {
-  Bell,
-  ChevronDown,
-  Languages,
-  Plus,
-} from "lucide-react";
+const API_URL = import.meta.env.VITE_API_URL;
+import { ChevronDown, Plus } from "lucide-react";
 import Footer from "../components/Footer";
+import.meta.env.VITE_API_URL
 
 const Dashboard = () => {
   const [username, setUsername] = useState("");
@@ -26,7 +22,12 @@ const Dashboard = () => {
     const saved = localStorage.getItem("agro_stats");
     return saved
       ? JSON.parse(saved)
-      : { cropsScanned: 0, diseasesFound: 0, upcomingSprays: 0, treatmentsDone: 0 };
+      : {
+          cropsScanned: 0,
+          diseasesFound: 0,
+          upcomingSprays: 0,
+          treatmentsDone: 0,
+        };
   });
 
   const dropdownRef = useRef();
@@ -43,9 +44,14 @@ const Dashboard = () => {
   // Scroll to the scan panel when "Scan New Plant" is clicked
   const handleScanNewPlant = () => {
     if (scanPanelRef.current) {
-      scanPanelRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+      scanPanelRef.current.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
       // Also trigger the file input inside the panel
-      scanPanelRef.current.dispatchEvent(new CustomEvent("triggerScan", { bubbles: true }));
+      scanPanelRef.current.dispatchEvent(
+        new CustomEvent("triggerScan", { bubbles: true }),
+      );
     }
   };
 
@@ -54,7 +60,7 @@ const Dashboard = () => {
       const tok = t || token;
       if (!tok) return;
       axios
-        .get("https://agrovision-bfjf.onrender.com/api/scan/stats", {
+        .get(`${API_URL}/api/scan/stats`, {
           headers: { Authorization: `Bearer ${tok}` },
         })
         .then((r) => {
@@ -71,7 +77,7 @@ const Dashboard = () => {
         })
         .catch(() => {});
     },
-    [token]
+    [token],
   );
 
   useEffect(() => {
@@ -82,7 +88,7 @@ const Dashboard = () => {
     }
     setToken(t);
     axios
-      .get("https://agrovision-bfjf.onrender.com/api/auth/me", {
+      .get(`${API_URL}/api/auth/me`, {
         headers: { Authorization: `Bearer ${t}` },
       })
       .then((r) => {
@@ -133,7 +139,7 @@ const Dashboard = () => {
       // Then sync with server
       refreshStats();
     },
-    [refreshStats]
+    [refreshStats],
   );
 
   // Called by PlantScanPanel after the user confirms a spray schedule
@@ -176,83 +182,88 @@ const Dashboard = () => {
   return (
     <div className="min-h-screen bg-[#f5f5f5] ">
       {/* NAVBAR */}
-     <div className="w-full bg-white border-b border-gray-100 px-4 sm:px-6 lg:px-8 py-3 sm:py-4 lg:py-5 flex items-center justify-between gap-3 sm:gap-4 relative z-40">
-  
-  {/* Left Section: Welcome Text */}
-  <div className="flex-1 min-w-0">
-    <h1 className="text-lg sm:text-2xl lg:text-3xl font-bold text-gray-900 truncate tracking-tight">
-      Welcome back, {loginType === "phone" ? username : firstName}! 👋
-    </h1>
-    <p className="text-gray-500 text-xs sm:text-sm mt-0.5 sm:mt-1 truncate">
-      Here's what's happening in your farm today.
-    </p>
-  </div>
+      <div className="w-full bg-white border-b border-gray-100 px-4 sm:px-6 lg:px-8 py-3 sm:py-4 lg:py-5 flex items-center justify-between gap-3 sm:gap-4 relative z-40">
+        {/* Left Section: Welcome Text */}
+        <div className="flex-1 min-w-0">
+          <h1 className="text-lg sm:text-2xl lg:text-3xl font-bold text-gray-900 truncate tracking-tight">
+            Welcome back, {loginType === "phone" ? username : firstName}! 👋
+          </h1>
+          <p className="text-gray-500 text-xs sm:text-sm mt-0.5 sm:mt-1 truncate">
+            Here's what's happening in your farm today.
+          </p>
+        </div>
 
-  {/* Right Section: Actions */}
-  <div className="flex items-center gap-1.5 sm:gap-3 lg:gap-4 flex-shrink:0">
-
-    {/* User Profile */}
-    {isLoggedIn && !isSignup && (
-      <div className="relative" ref={dropdownRef}>
-        <button
-          onClick={() => setOpenDropdown(!openDropdown)}
-          className="flex items-center gap-2 p-1 sm:px-2.5 sm:py-1.5 rounded-full sm:rounded-xl hover:bg-gray-100 transition-colors focus:outline-none"
-        >
-          {/* Ensure Avatar component accepts className or wrap it in a size-constrained div */}
-          <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-full overflow-hidden flex-shrink:0">
-             <Avatar size="sm" />
-          </div>
-          
-          <div className="hidden md:flex flex-col items-start leading-none">
-            <span className="font-semibold text-gray-800 text-sm">{firstName}</span>
-            <span className="text-xs text-gray-500 font-medium mt-0.5">Farmer</span>
-          </div>
-          <ChevronDown
-            size={16}
-            className={`hidden sm:block text-gray-400 transition-transform duration-200 ${
-              openDropdown ? "rotate-180" : ""
-            }`}
-          />
-        </button>
-
-        {/* Dropdown Menu */}
-        {openDropdown && (
-          <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden z-50 origin-top-right">
-            <div className="px-4 py-3 border-b border-gray-100 bg-gray-50/50 flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0">
-                <Avatar size="md" />
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="font-semibold text-gray-900 text-sm truncate">{username}</p>
-                <p className="text-xs text-gray-500 truncate">Farmer Account</p>
-              </div>
-            </div>
-            <div className="p-1.5">
+        {/* Right Section: Actions */}
+        <div className="flex items-center gap-1.5 sm:gap-3 lg:gap-4 flex-shrink:0">
+          {/* User Profile */}
+          {isLoggedIn && !isSignup && (
+            <div className="relative" ref={dropdownRef}>
               <button
-                onClick={logout}
-                className="w-full text-left px-3 py-2.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors text-sm font-medium"
+                onClick={() => setOpenDropdown(!openDropdown)}
+                className="flex items-center gap-2 p-1 sm:px-2.5 sm:py-1.5 rounded-full sm:rounded-xl hover:bg-gray-100 transition-colors focus:outline-none"
               >
-                Logout
-              </button>
-            </div>
-          </div>
-        )}
-      </div>
-    )}
+                {/* Ensure Avatar component accepts className or wrap it in a size-constrained div */}
+                <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-full overflow-hidden flex-shrink:0">
+                  <Avatar size="sm" />
+                </div>
 
-    {/* Scan New Plant Button */}
-    {/* ✅ FIXED: Mobile = Circle icon button | Desktop = Pill button with text */}
-    <button
-      onClick={handleScanNewPlant}
-      className="bg-green-600 hover:bg-green-700 active:bg-green-800 text-white p-2.5 sm:px-4 sm:py-2.5 rounded-full sm:rounded-xl flex items-center justify-center gap-2 text-sm font-semibold shadow-sm hover:shadow transition-all focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 ml-1 sm:ml-0"
-    >
-      <Plus size={18} className="sm:hidden" />
-      <Plus size={16} className="hidden sm:block" />
-      <span className="hidden sm:block">Scan New Plant</span>
-    </button>
-    
-  </div>
-</div>
+                <div className="hidden md:flex flex-col items-start leading-none">
+                  <span className="font-semibold text-gray-800 text-sm">
+                    {firstName}
+                  </span>
+                  <span className="text-xs text-gray-500 font-medium mt-0.5">
+                    Farmer
+                  </span>
+                </div>
+                <ChevronDown
+                  size={16}
+                  className={`hidden sm:block text-gray-400 transition-transform duration-200 ${
+                    openDropdown ? "rotate-180" : ""
+                  }`}
+                />
+              </button>
+
+              {/* Dropdown Menu */}
+              {openDropdown && (
+                <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden z-50 origin-top-right">
+                  <div className="px-4 py-3 border-b border-gray-100 bg-gray-50/50 flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0">
+                      <Avatar size="md" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="font-semibold text-gray-900 text-sm truncate">
+                        {username}
+                      </p>
+                      <p className="text-xs text-gray-500 truncate">
+                        Farmer Account
+                      </p>
+                    </div>
+                  </div>
+                  <div className="p-1.5">
+                    <button
+                      onClick={logout}
+                      className="w-full text-left px-3 py-2.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors text-sm font-medium"
+                    >
+                      Logout
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Scan New Plant Button */}
+          {/* ✅ FIXED: Mobile = Circle icon button | Desktop = Pill button with text */}
+          <button
+            onClick={handleScanNewPlant}
+            className="bg-green-600 hover:bg-green-700 active:bg-green-800 text-white p-2.5 sm:px-4 sm:py-2.5 rounded-full sm:rounded-xl flex items-center justify-center gap-2 text-sm font-semibold shadow-sm hover:shadow transition-all focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 ml-1 sm:ml-0"
+          >
+            <Plus size={18} className="sm:hidden" />
+            <Plus size={16} className="hidden sm:block" />
+            <span className="hidden sm:block">Scan New Plant</span>
+          </button>
+        </div>
+      </div>
 
       {/* MAIN CONTENT */}
       <div className="p-4 sm:p-6 lg:p-8 space-y-8">
@@ -261,7 +272,7 @@ const Dashboard = () => {
 
         {/* Scan panel (left, wider) + Upcoming Spray Reminders (right) — always side by side */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-         <div ref={scanPanelRef} className="w-full lg:col-span-2">
+          <div ref={scanPanelRef} className="w-full lg:col-span-2">
             <PlantScanPanel
               token={token}
               onScanComplete={handleScanComplete}
@@ -279,7 +290,7 @@ const Dashboard = () => {
 
         {/* ── NEW: Weather-Based Spray Advisory — sits below the disease result section, fully self-contained ── */}
         <WeatherAdvisory />
-        <Footer/>
+        <Footer />
       </div>
     </div>
   );

@@ -3,7 +3,7 @@
 // Lets the user pick one or more dates on a calendar, then POSTs them to /api/treatment.
 import { useMemo, useState } from "react";
 import { X, ChevronLeft, ChevronRight, Calendar as CalendarIcon, Loader2 } from "lucide-react";
-
+const API_URL = import.meta.env.VITE_API_URL;
 const WEEKDAY_LABELS = ["S", "M", "T", "W", "T", "F", "S"];
 
 const toDateKey = (d) => {
@@ -70,7 +70,7 @@ const ScheduleCalendarModal = ({ result, scanId, token, onClose, onScheduled }) 
     setSaving(true);
     setError("");
     try {
-      const res = await fetch("https://agrovision-bfjf.onrender.com/api/treatment", {
+      const res = await fetch(`${API_URL}/api/treatment`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

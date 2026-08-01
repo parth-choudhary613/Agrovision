@@ -5,7 +5,8 @@ import { RecaptchaVerifier, signInWithPhoneNumber } from 'firebase/auth';
 import { auth } from '../firebase/firebase';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Leaf, Sprout, Phone, User, ShieldCheck, ChevronRight } from 'lucide-react';
-
+const API_URL = import.meta.env.VITE_API_URL;
+import.meta.env.VITE_API_URL
 // Decode the Google JWT credential to extract name, email, picture
 const decodeGoogleJWT = (token) => {
   try {
@@ -40,7 +41,7 @@ const Signup = () => {
 
             // Send credential + decoded fields to backend
             // Backend should store name and picture and return them in /api/auth/me
-            const res = await axios.post('https://agrovision-bfjf.onrender.com/api/auth/google', {
+            const res = await axios.post(`${API_URL}/api/auth/google`, {
               credential: response.credential,
               name: payload.name,       // Full name from Google
               picture: payload.picture, // Profile picture URL from Google
@@ -121,7 +122,7 @@ const sendOTP = async () => {
     try {
       const result = await confirmationResult.confirm(otp);
       // Phone login: send username and phone. No picture — backend stores empty string.
-      const res = await axios.post('https://agrovision-bfjf.onrender.com/api/auth/phone', {
+      const res = await axios.post('${API_URL}/api/auth/phone', {
         username,
         phone: result.user.phoneNumber,
       });

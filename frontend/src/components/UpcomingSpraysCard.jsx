@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { Calendar, CheckCircle2, Loader2 } from "lucide-react";
-
+const API_URL = import.meta.env.VITE_API_URL;
 const CROP_ICON = {
   tomato: "🍅",
   potato: "🥔",
@@ -107,7 +107,7 @@ const UpcomingSpraysCard = ({ token, refreshKey, onTreatmentDone }) => {
     setLoading(true);
     setError("");
     try {
-      const res = await fetch("https://agrovision-bfjf.onrender.com/api/treatment/upcoming?limit=20", {
+      const res = await fetch(`${API_URL}/api/treatment/upcoming?limit=20`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
@@ -132,7 +132,7 @@ const UpcomingSpraysCard = ({ token, refreshKey, onTreatmentDone }) => {
       setMarkingIds((prev) => new Set(prev).add(key));
       try {
         const res = await fetch(
-          `https://agrovision-bfjf.onrender.com/api/treatment/${item.treatmentId}/spray/${item.sprayId}`,
+          `${API_URL}/api/treatment/${item.treatmentId}/spray/${item.sprayId}`,
           {
             method: "PATCH",
             headers: { Authorization: `Bearer ${token}` },

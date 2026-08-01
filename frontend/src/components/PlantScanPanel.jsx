@@ -17,11 +17,7 @@ import ScanDetailsModal from "./ScanDetailsModal";
 import ScheduleCalendarModal from "./ScheduleCalenderModal";
 import LottieImport from "lottie-react";
 import scanAnimation from "../assets/PlantScan.json";
-
-// Vite's dependency pre-bundler resolves lottie-react's UMD build in this
-// project (Vite 8 + rolldown), whose CJS interop leaves the whole module
-// object on `default` instead of the Lottie component itself. This line
-// unwraps it safely either way, regardless of how the bundler resolves it.
+const API_URL = import.meta.env.VITE_API_URL;
 const Lottie = LottieImport.default || LottieImport;
 
 const STORAGE_KEY = "agro_last_scan";
@@ -134,7 +130,7 @@ const PlantScanPanel = ({ token, onScanComplete, onSprayScheduled }) => {
     fd.append("image", selectedFile);
 
     try {
-      const r = await fetch("https://agrovision-bfjf.onrender.com/api/scan", {
+      const r = await fetch(`${API_URL}/api/scan`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
         body: fd,
