@@ -186,7 +186,7 @@ const Dashboard = () => {
         {/* Left Section: Welcome Text */}
         <div className="flex-1 min-w-0">
           <h1 className="text-lg sm:text-2xl lg:text-3xl font-bold text-gray-900 truncate tracking-tight">
-            Welcome back, {loginType === "phone" ? username : firstName}! 👋
+            Welcome back, {loginType === "phone" ? username : firstName}
           </h1>
           <p className="text-gray-500 text-xs sm:text-sm mt-0.5 sm:mt-1 truncate">
             Here's what's happening in your farm today.
