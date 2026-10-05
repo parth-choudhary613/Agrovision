@@ -1,23 +1,26 @@
-// frontend/src/components/weather/WeatherAdvisory.jsx
-import React, { useState, useCallback } from 'react';
-import { MapPin, RefreshCw, AlertCircle, CloudOff, CloudSunRain } from 'lucide-react';
-import WeatherCard from './WeatherCard';
-import SprayScore from './SprayScore';
-import LottieImport from 'lottie-react';
-import locationSvg from "../../assets/location.svg";
-import locationAnimation from '../../assets/Plantlottie.json';
-import { fetchSprayAdvisory, getCurrentPosition } from '../../services/weatherApi';
-
-// See PlantScanPanel.jsx for why this unwrap is needed (Vite/rolldown UMD interop quirk).
-const Lottie = LottieImport.default || LottieImport;
+import { useState, useCallback } from "react";
+import {
+  MapPin,
+  RefreshCw,
+  AlertCircle,
+  CloudOff,
+  CloudSunRain,
+  Navigation,
+} from "lucide-react";
+import WeatherCard from "./WeatherCard";
+import SprayScore from "./SprayScore";
+import {
+  fetchSprayAdvisory,
+  getCurrentPosition,
+} from "../../services/weatherApi";
 
 const WeatherAdvisory = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [advisory, setAdvisory] = useState(null);
   const [coords, setCoords] = useState(null);
-  const [manualLat, setManualLat] = useState('');
-  const [manualLon, setManualLon] = useState('');
+  const [manualLat, setManualLat] = useState("");
+  const [manualLon, setManualLon] = useState("");
   const [showManualEntry, setShowManualEntry] = useState(false);
 
   const loadAdvisory = useCallback(async (lat, lon) => {
@@ -28,7 +31,7 @@ const WeatherAdvisory = () => {
       setAdvisory(data);
       setCoords({ lat, lon });
     } catch (err) {
-      setError(err.message || 'Failed to load weather advisory.');
+      setError(err.message || "Failed to load weather advisory.");
       setAdvisory(null);
     } finally {
       setLoading(false);
@@ -42,7 +45,7 @@ const WeatherAdvisory = () => {
       const { lat, lon } = await getCurrentPosition();
       await loadAdvisory(lat, lon);
     } catch (err) {
-      setError(err.message || 'Could not determine your location.');
+      setError(err.message || "Could not determine your location automatically.");
       setLoading(false);
       setShowManualEntry(true);
     }
@@ -53,7 +56,7 @@ const WeatherAdvisory = () => {
     const lat = parseFloat(manualLat);
     const lon = parseFloat(manualLon);
     if (Number.isNaN(lat) || Number.isNaN(lon)) {
-      setError('Please enter valid numeric latitude and longitude.');
+      setError("Please enter valid numeric latitude and longitude coordinates.");
       return;
     }
     loadAdvisory(lat, lon);
@@ -64,139 +67,158 @@ const WeatherAdvisory = () => {
   };
 
   return (
-    <div className="mt-8 mb-8 w-full">
+    <div className="w-full">
+      {/* ── STATE 1: LOCATION PROMPT HERO ── */}
       {!advisory && !loading && (
-        <div className="relative overflow-hidden rounded-[32px] shadow-sm border border-gray-100 p-8 sm:p-12 bg-amber-50 text-center w-full min-h-[350px] flex flex-col justify-center items-center">
-          
-          {/* Responsive Background Image */}
-          <img
-            src={locationSvg}
-            alt="Location Background"
-            className="absolute inset-0 w-full h-full object-cover z-0 pointer-events-none"
-          />
+        <div className="relative overflow-hidden rounded-3xl border border-[#DCE5DC] p-8 sm:p-12 bg-white text-center w-full shadow-xs flex flex-col justify-center items-center">
+          {/* Subtle background glow */}
+          <div className="absolute top-0 right-0 w-72 h-72 rounded-full bg-[#95B89A]/15 blur-3xl pointer-events-none" />
+          <div className="absolute bottom-0 left-0 w-72 h-72 rounded-full bg-[#40916C]/10 blur-3xl pointer-events-none" />
 
-          {/* Optional Overlay to ensure text readability (if SVG is too bright/busy) */}
-          <div className="absolute inset-0 bg-white/40 z-0 pointer-events-none"></div>
+          <div className="relative z-10 w-full max-w-lg mx-auto space-y-4">
+            <div className="w-14 h-14 rounded-2xl bg-[#F7F5EE] border border-[#DCE5DC] flex items-center justify-center mx-auto text-[#1B4332] shadow-2xs">
+              <MapPin size={26} className="text-[#40916C]" />
+            </div>
 
-          {/* Decorative Lottie Background */}
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0">
-          </div>
+            <div>
+              <h3 className="font-serif text-2xl font-bold text-[#1B4332]">
+                Synchronize Field Weather
+              </h3>
+              <p className="font-sans text-sm text-[#66736B] mt-1 max-w-md mx-auto leading-relaxed">
+                Connect your farm coordinates to calculate rain wash-off risk,
+                chemical drift, and identify optimal spray windows.
+              </p>
+            </div>
 
-          {/* Foreground Content */}
-          <div className="relative z-10 w-full max-w-md mx-auto">
-            <MapPin className="mx-auto text-green-600 mb-3 drop-shadow-sm" size={32} />
-            <p className="text-gray-800 font-medium mb-6 text-base sm:text-lg drop-shadow-sm">
-              Enable location access to get a spray advisory for your field.
-            </p>
-            <button
-              onClick={handleUseMyLocation}
-              className="bg-green-700 hover:bg-green-800 text-white px-6 py-3 rounded-2xl font-semibold inline-flex items-center gap-2 transition shadow-md"
-            >
-              <MapPin size={16} />
-              Use My Location
-            </button>
+            <div className="pt-2">
+              <button
+                onClick={handleUseMyLocation}
+                className="inline-flex items-center justify-center gap-2 bg-[#1B4332] hover:bg-[#40916C] text-white px-7 py-3.5 rounded-xl font-semibold text-sm transition-all shadow-xs active:scale-[0.98]"
+              >
+                <Navigation size={16} />
+                <span>Use Current Farm Location</span>
+              </button>
+            </div>
 
-            <div className="mt-6">
+            <div>
               <button
                 onClick={() => setShowManualEntry((v) => !v)}
-                className="text-sm text-gray-600 hover:text-gray-900 underline underline-offset-2 font-medium"
+                className="text-xs font-semibold text-[#66736B] hover:text-[#1B4332] underline underline-offset-4 transition-colors"
               >
-                {showManualEntry ? 'Hide manual entry' : 'Enter coordinates manually instead'}
+                {showManualEntry
+                  ? "Hide coordinate inputs"
+                  : "Or enter farm GPS coordinates manually"}
               </button>
             </div>
 
             {showManualEntry && (
-              <form onSubmit={handleManualSubmit} className="mt-5 flex flex-col sm:flex-row gap-2 justify-center w-full">
+              <form
+                onSubmit={handleManualSubmit}
+                className="mt-4 pt-4 border-t border-[#DCE5DC] flex flex-col sm:flex-row gap-2.5 justify-center w-full"
+              >
                 <input
-                  type="number" step="any" placeholder="Latitude" value={manualLat}
+                  type="number"
+                  step="any"
+                  placeholder="Latitude (e.g. 23.0225)"
+                  value={manualLat}
                   onChange={(e) => setManualLat(e.target.value)}
-                  className="border border-gray-200 rounded-xl px-4 py-2.5 text-sm w-full sm:w-1/2 focus:outline-none focus:ring-2 focus:ring-green-500 shadow-sm"
+                  className="bg-[#F7F5EE] border border-[#DCE5DC] rounded-xl px-4 py-2.5 text-xs text-[#26332B] placeholder:text-[#66736B]/60 focus:outline-none focus:border-[#1B4332] w-full sm:w-1/2"
                 />
                 <input
-                  type="number" step="any" placeholder="Longitude" value={manualLon}
+                  type="number"
+                  step="any"
+                  placeholder="Longitude (e.g. 72.5714)"
+                  value={manualLon}
                   onChange={(e) => setManualLon(e.target.value)}
-                  className="border border-gray-200 rounded-xl px-4 py-2.5 text-sm w-full sm:w-1/2 focus:outline-none focus:ring-2 focus:ring-green-500 shadow-sm"
+                  className="bg-[#F7F5EE] border border-[#DCE5DC] rounded-xl px-4 py-2.5 text-xs text-[#26332B] placeholder:text-[#66736B]/60 focus:outline-none focus:border-[#1B4332] w-full sm:w-1/2"
                 />
                 <button
                   type="submit"
-                  className="bg-gray-800 hover:bg-gray-900 text-white px-5 py-2.5 rounded-xl text-sm font-semibold transition shadow-sm w-full sm:w-auto"
+                  className="bg-[#1B4332] hover:bg-[#40916C] text-white px-5 py-2.5 rounded-xl text-xs font-semibold transition shadow-xs w-full sm:w-auto shrink-0"
                 >
-                  Get Advisory
+                  Fetch Weather
                 </button>
               </form>
             )}
 
             {error && (
-              <div className="mt-4 flex items-center justify-center gap-2 text-red-600 bg-red-50/90 py-2 px-4 rounded-xl text-sm font-medium">
+              <div className="mt-3 flex items-center justify-center gap-2 text-rose-700 bg-rose-50 border border-rose-200 py-2.5 px-4 rounded-xl text-xs font-medium">
                 <AlertCircle size={15} />
-                {error}
+                <span>{error}</span>
               </div>
             )}
           </div>
         </div>
       )}
 
-      {/* ── Loading state ───────────────────────────────────────────────── */}
+      {/* ── STATE 2: LOADING ── */}
       {loading && (
-        <div className="bg-white rounded-[32px] shadow-sm border border-gray-100 p-10 flex flex-col items-center gap-4 max-w-2xl mx-auto">
-          <div className="w-12 h-12 border-4 border-green-500 border-t-transparent rounded-full animate-spin" />
-          <p className="text-gray-500 font-medium">Fetching live weather data...</p>
+        <div className="bg-white rounded-3xl border border-[#DCE5DC] shadow-xs p-12 flex flex-col items-center justify-center gap-3 text-center max-w-xl mx-auto">
+          <div className="w-9 h-9 border-3 border-[#1B4332] border-t-transparent rounded-full animate-spin" />
+          <p className="font-serif text-lg font-bold text-[#1B4332]">
+            Retrieving Live Micro-Climate Data...
+          </p>
+          <p className="text-xs text-[#66736B]">
+            Querying OpenWeather radar for humidity, wind drift, and precipitation probability
+          </p>
         </div>
       )}
 
-      {/* ── Error state (after a previous successful load, or manual retry) ── */}
+      {/* ── STATE 3: ERROR AFTER INITIAL LOAD ── */}
       {error && !loading && advisory === null && coords && (
-        <div className="bg-red-50 border border-red-100 rounded-3xl p-6 flex items-center gap-3 w-full">
-          <CloudOff className="text-red-500 flex-shrink-0" size={22} />
+        <div className="bg-rose-50 border border-rose-200 rounded-3xl p-6 flex items-center gap-3 w-full">
+          <CloudOff className="text-rose-600 shrink-0" size={24} />
           <div>
-            <p className="text-red-700 font-semibold text-sm">Could not load weather advisory</p>
-            <p className="text-red-500 text-sm mt-0.5">{error}</p>
+            <p className="text-rose-900 font-semibold text-sm">
+              Could not update weather advisory
+            </p>
+            <p className="text-rose-700 text-xs mt-0.5">{error}</p>
           </div>
         </div>
       )}
 
-      {/* ── Success state (The Unified Card) ────────────────────────────── */}
+      {/* ── STATE 4: ACTIVE WEATHER ADVISORY DASHBOARD ── */}
       {advisory && !loading && (
-        <div className="bg-white rounded-[32px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 p-6 sm:p-10 w-full">
-          
-          {/* Unified Header */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-10">
-            <div className="flex items-start gap-4">
-              <div className="w-12 h-12 bg-blue-50 text-blue-500 rounded-2xl flex items-center justify-center flex-shrink-0">
-                 <CloudSunRain size={28} strokeWidth={1.5} />
+        <div className="bg-white rounded-3xl border border-[#DCE5DC] shadow-sm p-6 sm:p-8 w-full space-y-8">
+          {/* Header Bar */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-[#DCE5DC]">
+            <div className="flex items-start gap-3.5">
+              <div className="w-12 h-12 rounded-2xl bg-[#F7F5EE] border border-[#DCE5DC] text-[#1B4332] flex items-center justify-center shrink-0">
+                <CloudSunRain size={24} className="text-[#40916C]" />
               </div>
               <div>
-                <h2 className="text-xl sm:text-2xl font-bold text-slate-800">Weather-Based Spray Advisory</h2>
-                <p className="text-sm sm:text-base text-gray-500 mt-1">
-                  Know if it's safe to spray right now, based on live weather conditions.
+                <h2 className="font-serif text-xl sm:text-2xl font-bold text-[#1B4332]">
+                  Weather-Based Spray Safety Advisory
+                </h2>
+                <p className="font-sans text-xs sm:text-sm text-[#66736B] mt-0.5">
+                  Real-time spray suitability index based on temperature, wind drift, and rain risk.
                 </p>
               </div>
             </div>
-            
+
             <button
               onClick={handleRefresh}
               disabled={loading}
-              className="flex items-center justify-center gap-2 text-sm font-semibold text-slate-700 hover:text-slate-900 bg-white border border-gray-200 hover:bg-gray-50 px-5 py-2.5 rounded-xl transition-all disabled:opacity-50 flex-shrink-0 shadow-sm"
+              className="inline-flex items-center justify-center gap-2 text-xs font-semibold text-[#1B4332] hover:text-[#40916C] bg-[#F7F5EE] border border-[#DCE5DC] hover:bg-[#FAF9F5] px-4 py-2.5 rounded-xl transition-all shadow-2xs self-start sm:self-auto shrink-0"
             >
-              <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
-              Refresh
+              <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
+              <span>Refresh Forecast</span>
             </button>
           </div>
 
-          {/* Current Weather Section */}
+          {/* 4-Metric Weather Conditions */}
           <WeatherCard weather={advisory.weather} />
-          
-          {/* Divider */}
-          <hr className="my-10 border-gray-100" />
-          
-          {/* Advisory & Reasoning Section */}
-          <SprayScore
-            sprayScore={advisory.sprayScore}
-            recommendation={advisory.recommendation}
-            recommendationLevel={advisory.recommendationLevel}
-            reasons={advisory.reasons}
-            bestSprayWindow={advisory.bestSprayWindow}
-          />
+
+          {/* Spray Suitability & Reason Checklist */}
+          <div className="pt-2">
+            <SprayScore
+              sprayScore={advisory.sprayScore}
+              recommendation={advisory.recommendation}
+              recommendationLevel={advisory.recommendationLevel}
+              reasons={advisory.reasons}
+              bestSprayWindow={advisory.bestSprayWindow}
+            />
+          </div>
         </div>
       )}
     </div>

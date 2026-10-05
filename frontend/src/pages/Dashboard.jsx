@@ -4,21 +4,38 @@ import axios from "axios";
 import DashboardMetrics from "../components/DashboardMetrics";
 import PlantScanPanel from "../components/PlantScanPanel";
 import UpcomingSpraysCard from "../components/UpcomingSpraysCard";
-import WeatherAdvisory from "../components/weather/WeatherAdvisory"; // ← NEW: Weather-Based Spray Advisory (isolated module)
-const API_URL = import.meta.env.VITE_API_URL;
-import { ChevronDown, Plus } from "lucide-react";
+import WeatherAdvisory from "../components/weather/WeatherAdvisory";
 import Footer from "../components/Footer";
-import.meta.env.VITE_API_URL
+import { ChevronDown, Plus, LogOut } from "lucide-react";
+
+const API_URL = import.meta.env.VITE_API_URL;
+
+const UserAvatar = ({ size = "md", picture, initial }) => {
+  const cls = size === "sm" ? "w-8 h-8 text-xs" : "w-10 h-10 text-sm";
+  return picture ? (
+    <img
+      src={picture}
+      alt="Farmer profile"
+      referrerPolicy="no-referrer"
+      className={`${cls} rounded-full object-cover border border-[#DCE5DC] shrink-0`}
+    />
+  ) : (
+    <div
+      className={`${cls} rounded-full bg-[#1B4332] text-white flex items-center justify-center font-bold shrink-0 shadow-2xs`}
+    >
+      {initial}
+    </div>
+  );
+};
 
 const Dashboard = () => {
   const [username, setUsername] = useState("");
   const [picture, setPicture] = useState("");
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(() => !!localStorage.getItem("token"));
   const [openDropdown, setOpenDropdown] = useState(false);
   const [loginType, setLoginType] = useState("");
-  const [token, setToken] = useState("");
+  const [token] = useState(() => localStorage.getItem("token") || "");
   const [stats, setStats] = useState(() => {
-    // Persist stats across refresh per user
     const saved = localStorage.getItem("agro_stats");
     return saved
       ? JSON.parse(saved)
@@ -31,7 +48,7 @@ const Dashboard = () => {
   });
 
   const dropdownRef = useRef();
-  const scanPanelRef = useRef(); // ← ref to scroll to scan panel
+  const scanPanelRef = useRef();
   const [sprayRefreshKey, setSprayRefreshKey] = useState(0);
 
   const navigate = useNavigate();
@@ -39,29 +56,27 @@ const Dashboard = () => {
   const isSignup = location.pathname === "/";
 
   const firstName = username ? username.split(" ")[0] : "";
-  const initial = username ? username.charAt(0).toUpperCase() : "?";
+  const initial = username ? username.charAt(0).toUpperCase() : "F";
 
-  // Scroll to the scan panel when "Scan New Plant" is clicked
   const handleScanNewPlant = () => {
     if (scanPanelRef.current) {
       scanPanelRef.current.scrollIntoView({
         behavior: "smooth",
         block: "start",
       });
-      // Also trigger the file input inside the panel
       scanPanelRef.current.dispatchEvent(
-        new CustomEvent("triggerScan", { bubbles: true }),
+        new CustomEvent("triggerScan", { bubbles: true })
       );
     }
   };
 
   const refreshStats = useCallback(
-    (t) => {
-      const tok = t || token;
-      if (!tok) return;
+    (tok) => {
+      const activeToken = tok || token;
+      if (!activeToken) return;
       axios
         .get(`${API_URL}/api/scan/stats`, {
-          headers: { Authorization: `Bearer ${tok}` },
+          headers: { Authorization: `Bearer ${activeToken}` },
         })
         .then((r) => {
           if (r.data) {
@@ -77,37 +92,48 @@ const Dashboard = () => {
         })
         .catch(() => {});
     },
-    [token],
+    [token]
   );
 
   useEffect(() => {
-    const t = localStorage.getItem("token");
-    if (!t) {
+    if (!token) {
       navigate("/");
       return;
     }
-    setToken(t);
     axios
       .get(`${API_URL}/api/auth/me`, {
-        headers: { Authorization: `Bearer ${t}` },
+        headers: { Authorization: `Bearer ${token}` },
       })
       .then((r) => {
         setUsername(r.data.username || "");
         setPicture(r.data.picture || "");
         setLoginType(r.data.loginType || "");
         setIsLoggedIn(true);
-        refreshStats(t);
+        refreshStats(token);
       })
       .catch(() => {
-        localStorage.removeItem("token");
-        navigate("/");
+        // Fallback to legacy endpoint if /me fails
+        axios
+          .get(`${API_URL}/api/auth/user`, {
+            headers: { Authorization: `Bearer ${token}` },
+          })
+          .then((r) => {
+            setUsername(r.data.username || "");
+            setIsLoggedIn(true);
+            refreshStats(token);
+          })
+          .catch(() => {
+            localStorage.removeItem("token");
+            navigate("/");
+          });
       });
-  }, [navigate, refreshStats]);
+  }, [token, navigate, refreshStats]);
 
   useEffect(() => {
     const handler = (e) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target))
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
         setOpenDropdown(false);
+      }
     };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
@@ -120,10 +146,8 @@ const Dashboard = () => {
     navigate("/");
   };
 
-  // Called by PlantScanPanel after a successful scan
   const handleScanComplete = useCallback(
     (data) => {
-      // Optimistically update metrics immediately
       setStats((prev) => {
         const updated = {
           ...prev,
@@ -136,23 +160,16 @@ const Dashboard = () => {
         localStorage.setItem("agro_stats", JSON.stringify(updated));
         return updated;
       });
-      // Then sync with server
       refreshStats();
     },
-    [refreshStats],
+    [refreshStats]
   );
 
-  // Called by PlantScanPanel after the user confirms a spray schedule
   const handleSprayScheduled = useCallback(() => {
-    setSprayRefreshKey((k) => k + 1); // tells UpcomingSpraysCard to refetch
-    refreshStats(); // upcomingSprays / treatmentsDone counts may have changed
+    setSprayRefreshKey((k) => k + 1);
+    refreshStats();
   }, [refreshStats]);
 
-  // Called by UpcomingSpraysCard when the user marks a specific scheduled
-  // spray as done. UpcomingSpraysCard already calls the backend PATCH
-  // endpoint to flip that spray's status to "done" (so it can never be
-  // marked twice) before calling this — here we just bump the metric by
-  // exactly one and persist the new total.
   const handleTreatmentDone = useCallback(() => {
     setStats((prev) => {
       const updated = { ...prev, treatmentsDone: prev.treatmentsDone + 1 };
@@ -161,63 +178,51 @@ const Dashboard = () => {
     });
   }, []);
 
-  const Avatar = ({ size = "md" }) => {
-    const cls = size === "sm" ? "w-9 h-9 text-sm" : "w-11 h-11 text-base";
-    return picture ? (
-      <img
-        src={picture}
-        alt="profile"
-        referrerPolicy="no-referrer"
-        className={`${cls} rounded-full object-cover border border-gray-200 flex-shrink-0`}
-      />
-    ) : (
-      <div
-        className={`${cls} rounded-full bg-green-700 text-white flex items-center justify-center font-bold flex-shrink-0`}
-      >
-        {initial}
-      </div>
-    );
-  };
-
   return (
-    <div className="min-h-screen bg-[#f5f5f5] ">
-      {/* NAVBAR */}
-      <div className="w-full bg-white border-b border-gray-100 px-4 sm:px-6 lg:px-8 py-3 sm:py-4 lg:py-5 flex items-center justify-between gap-3 sm:gap-4 relative z-40">
+    <div className="space-y-8">
+      {/* ── TOPBAR: GREETING & QUICK ACTIONS ── */}
+      <div className="bg-white rounded-3xl border border-[#DCE5DC] px-5 sm:px-8 py-5 flex items-center justify-between gap-4 shadow-xs">
         {/* Left Section: Welcome Text */}
         <div className="flex-1 min-w-0">
-          <h1 className="text-lg sm:text-2xl lg:text-3xl font-bold text-gray-900 truncate tracking-tight">
-            Welcome back, {loginType === "phone" ? username : firstName}
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-[#40916C]" />
+            <span className="text-[11px] font-bold uppercase tracking-wider text-[#66736B]">
+              Active Farm Session
+            </span>
+          </div>
+          <h1 className="font-serif text-2xl sm:text-3xl font-bold text-[#1B4332] truncate mt-1">
+            Welcome back, {loginType === "phone" ? username : firstName || "Farmer"}
           </h1>
-          <p className="text-gray-500 text-xs sm:text-sm mt-0.5 sm:mt-1 truncate">
-            Here's what's happening in your farm today.
+          <p className="font-sans text-xs sm:text-sm text-[#66736B] truncate mt-0.5">
+            Here is your crop health overview and spray advisory for today.
           </p>
         </div>
 
-        {/* Right Section: Actions */}
-        <div className="flex items-center gap-1.5 sm:gap-3 lg:gap-4 flex-shrink:0">
-          {/* User Profile */}
+        {/* Right Section: Actions & User Dropdown */}
+        <div className="flex items-center gap-3 shrink-0">
+          {/* User Profile Dropdown */}
           {isLoggedIn && !isSignup && (
             <div className="relative" ref={dropdownRef}>
               <button
                 onClick={() => setOpenDropdown(!openDropdown)}
-                className="flex items-center gap-2 p-1 sm:px-2.5 sm:py-1.5 rounded-full sm:rounded-xl hover:bg-gray-100 transition-colors focus:outline-none"
+                className="flex items-center gap-2.5 p-1.5 sm:px-3 sm:py-2 rounded-2xl hover:bg-[#F7F5EE] border border-transparent hover:border-[#DCE5DC] transition-all focus:outline-none"
               >
-                {/* Ensure Avatar component accepts className or wrap it in a size-constrained div */}
-                <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-full overflow-hidden flex-shrink:0">
-                  <Avatar size="sm" />
+                <div className="shrink-0">
+                  <UserAvatar size="sm" picture={picture} initial={initial} />
                 </div>
 
                 <div className="hidden md:flex flex-col items-start leading-none">
-                  <span className="font-semibold text-gray-800 text-sm">
-                    {firstName}
+                  <span className="font-bold text-xs text-[#26332B]">
+                    {firstName || username}
                   </span>
-                  <span className="text-xs text-gray-500 font-medium mt-0.5">
-                    Farmer
+                  <span className="text-[10px] text-[#66736B] font-semibold mt-0.5">
+                    Verified Grower
                   </span>
                 </div>
+
                 <ChevronDown
-                  size={16}
-                  className={`hidden sm:block text-gray-400 transition-transform duration-200 ${
+                  size={15}
+                  className={`hidden sm:block text-[#66736B] transition-transform duration-200 ${
                     openDropdown ? "rotate-180" : ""
                   }`}
                 />
@@ -225,16 +230,14 @@ const Dashboard = () => {
 
               {/* Dropdown Menu */}
               {openDropdown && (
-                <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden z-50 origin-top-right">
-                  <div className="px-4 py-3 border-b border-gray-100 bg-gray-50/50 flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0">
-                      <Avatar size="md" />
-                    </div>
+                <div className="absolute right-0 top-full mt-2 w-60 bg-white rounded-2xl shadow-xl border border-[#DCE5DC] overflow-hidden z-50 origin-top-right animate-in fade-in zoom-in-95 duration-150">
+                  <div className="px-4 py-3.5 border-b border-[#DCE5DC] bg-[#F7F5EE] flex items-center gap-3">
+                    <UserAvatar size="md" picture={picture} initial={initial} />
                     <div className="min-w-0 flex-1">
-                      <p className="font-semibold text-gray-900 text-sm truncate">
+                      <p className="font-bold text-[#26332B] text-xs truncate">
                         {username}
                       </p>
-                      <p className="text-xs text-gray-500 truncate">
+                      <p className="text-[10px] text-[#66736B] truncate">
                         Farmer Account
                       </p>
                     </div>
@@ -242,9 +245,10 @@ const Dashboard = () => {
                   <div className="p-1.5">
                     <button
                       onClick={logout}
-                      className="w-full text-left px-3 py-2.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors text-sm font-medium"
+                      className="w-full text-left px-3 py-2 rounded-xl text-rose-700 hover:bg-rose-50 text-xs font-semibold flex items-center gap-2 transition-colors"
                     >
-                      Logout
+                      <LogOut size={14} />
+                      <span>Logout Account</span>
                     </button>
                   </div>
                 </div>
@@ -252,46 +256,43 @@ const Dashboard = () => {
             </div>
           )}
 
-          {/* Scan New Plant Button */}
-          {/* ✅ FIXED: Mobile = Circle icon button | Desktop = Pill button with text */}
+          {/* Primary Action Button */}
           <button
             onClick={handleScanNewPlant}
-            className="bg-green-600 hover:bg-green-700 active:bg-green-800 text-white p-2.5 sm:px-4 sm:py-2.5 rounded-full sm:rounded-xl flex items-center justify-center gap-2 text-sm font-semibold shadow-sm hover:shadow transition-all focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 ml-1 sm:ml-0"
+            className="bg-[#1B4332] hover:bg-[#40916C] active:scale-[0.98] text-white p-3 sm:px-5 sm:py-3 rounded-2xl flex items-center justify-center gap-2 text-xs sm:text-sm font-semibold shadow-xs transition-all focus:outline-none"
           >
-            <Plus size={18} className="sm:hidden" />
-            <Plus size={16} className="hidden sm:block" />
-            <span className="hidden sm:block">Scan New Plant</span>
+            <Plus size={16} />
+            <span className="hidden sm:inline">Scan New Plant</span>
           </button>
         </div>
       </div>
 
-      {/* MAIN CONTENT */}
-      <div className="p-4 sm:p-6 lg:p-8 space-y-8">
-        {/* Metrics — receives live stats */}
-        <DashboardMetrics stats={stats} />
+      {/* ── METRICS SECTION ── */}
+      <DashboardMetrics stats={stats} />
 
-        {/* Scan panel (left, wider) + Upcoming Spray Reminders (right) — always side by side */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-          <div ref={scanPanelRef} className="w-full lg:col-span-2">
-            <PlantScanPanel
-              token={token}
-              onScanComplete={handleScanComplete}
-              onSprayScheduled={handleSprayScheduled}
-            />
-          </div>
-          <div className="lg:col-span-1">
-            <UpcomingSpraysCard
-              token={token}
-              refreshKey={sprayRefreshKey}
-              onTreatmentDone={handleTreatmentDone}
-            />
-          </div>
+      {/* ── SCAN PANEL & UPCOMING SPRAYS GRID ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+        <div ref={scanPanelRef} className="w-full lg:col-span-2">
+          <PlantScanPanel
+            token={token}
+            onScanComplete={handleScanComplete}
+            onSprayScheduled={handleSprayScheduled}
+          />
         </div>
-
-        {/* ── NEW: Weather-Based Spray Advisory — sits below the disease result section, fully self-contained ── */}
-        <WeatherAdvisory />
-        <Footer />
+        <div className="lg:col-span-1">
+          <UpcomingSpraysCard
+            token={token}
+            refreshKey={sprayRefreshKey}
+            onTreatmentDone={handleTreatmentDone}
+          />
+        </div>
       </div>
+
+      {/* ── WEATHER ADVISORY SECTION ── */}
+      <WeatherAdvisory />
+
+      {/* ── FOOTER ── */}
+      <Footer />
     </div>
   );
 };

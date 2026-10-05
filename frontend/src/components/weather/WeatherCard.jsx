@@ -1,6 +1,10 @@
-// frontend/src/components/weather/WeatherCard.jsx
-import React from 'react';
-import { Thermometer, Droplets, Wind, CloudRain } from 'lucide-react';
+import { Thermometer, Droplets, Wind, CloudRain } from "lucide-react";
+
+function humidityHint(humidity) {
+  if (humidity > 90) return "Very High (Fungal Risk)";
+  if (humidity >= 40 && humidity <= 80) return "Ideal Spray Range";
+  return "Outside Optimum Range";
+}
 
 const WeatherCard = ({ weather }) => {
   if (!weather?.current) return null;
@@ -9,108 +13,91 @@ const WeatherCard = ({ weather }) => {
   const metrics = [
     {
       icon: Thermometer,
-      label: 'TEMPERATURE',
+      label: "TEMPERATURE",
       value: `${current.temperature}°C`,
       sub: `Feels like ${current.feelsLike}°C`,
-      iconColor: 'text-orange-500',
-      // Upgraded to 3D-looking gradients
-      bg: 'bg-gradient-to-br from-[#FFF5ED] to-[#FFE4CE]', 
-      shadow: 'shadow-orange-500/20',
+      iconColor: "text-amber-700",
+      accentBg: "bg-amber-50/60",
     },
     {
       icon: Droplets,
-      label: 'HUMIDITY',
+      label: "HUMIDITY",
       value: `${current.humidity}%`,
       sub: humidityHint(current.humidity),
-      iconColor: 'text-blue-500',
-      bg: 'bg-gradient-to-br from-[#F0F5FF] to-[#DCE8FF]',
-      shadow: 'shadow-blue-500/20',
+      iconColor: "text-[#40916C]",
+      accentBg: "bg-[#F3F7F3]",
     },
     {
       icon: Wind,
-      label: 'WIND SPEED',
+      label: "WIND SPEED",
       value: `${current.windSpeedKmh} km/h`,
-      sub: current.windSpeedKmh > 15 ? 'High wind' : 'Calm',
-      iconColor: 'text-slate-600',
-      bg: 'bg-gradient-to-br from-[#F8F9FA] to-[#E2E5EB]',
-      shadow: 'shadow-slate-500/20',
+      sub: current.windSpeedKmh > 15 ? "High Drift Risk" : "Calm (Safe)",
+      iconColor: "text-[#26332B]",
+      accentBg: "bg-[#F7F5EE]",
     },
     {
       icon: CloudRain,
-      label: 'RAIN CHANCE',
+      label: "RAIN RISK",
       value: `${current.rainProbability}%`,
-      sub: current.rainProbability > 40 ? 'High risk' : 'Low risk',
-      iconColor: 'text-teal-600',
-      bg: 'bg-gradient-to-br from-[#ECFAF9] to-[#CFF0F0]',
-      shadow: 'shadow-teal-500/20',
+      sub: current.rainProbability > 40 ? "Wash-off Risk" : "Low Rain Risk",
+      iconColor: "text-sky-700",
+      accentBg: "bg-sky-50/60",
     },
   ];
 
   return (
-    <div className="w-full relative">
-      {/* Custom Keyframes for 3D Floating Effect */}
-      <style>
-        {`
-          @keyframes float {
-            0% { transform: translateY(0px) rotate(0deg); }
-            50% { transform: translateY(-12px) rotate(2deg); }
-            100% { transform: translateY(0px) rotate(0deg); }
-          }
-          .animate-float {
-            animation: float 4s ease-in-out infinite;
-          }
-          .glass-highlight {
-            background: linear-gradient(135deg, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0) 100%);
-          }
-        `}
-      </style>
-
-      <div className="flex items-center justify-between mb-8 px-2">
-        <div className="z-10">
-          <h3 className="text-sm font-extrabold text-slate-800 uppercase tracking-widest flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
-            Current Weather
-          </h3>
-          <p className="text-gray-500 text-lg capitalize mt-1 font-medium">{current.description}</p>
+    <div className="w-full">
+      {/* Current Condition Summary Bar */}
+      <div className="flex items-center justify-between mb-6 px-1">
+        <div>
+          <span className="text-[11px] font-bold text-[#40916C] uppercase tracking-widest flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-[#40916C] animate-pulse" />
+            Live Field Conditions
+          </span>
+          <p className="font-serif text-xl sm:text-2xl font-bold text-[#1B4332] capitalize mt-0.5">
+            {current.description || "Field Weather Station"}
+          </p>
         </div>
-        
+
         {current.icon && (
-          <div className="relative">
-            {/* Soft glow behind the icon */}
-            <div className="absolute inset-0 bg-yellow-300 blur-2xl opacity-20 rounded-full"></div>
+          <div className="flex items-center gap-2 bg-[#F7F5EE] border border-[#DCE5DC] px-3.5 py-1.5 rounded-2xl">
             <img
-              src={`https://openweathermap.org/img/wn/${current.icon}@4x.png`}
+              src={`https://openweathermap.org/img/wn/${current.icon}@2x.png`}
               alt={current.description}
-              className="w-28 h-28 -my-6 object-contain drop-shadow-2xl animate-float relative z-10"
+              className="w-10 h-10 object-contain"
             />
+            <span className="font-bold text-sm text-[#1B4332]">
+              {current.temperature}°C
+            </span>
           </div>
         )}
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-        {metrics.map(({ icon: Icon, label, value, sub, iconColor, bg, shadow }) => (
-          <div 
-            key={label} 
-            className={`group relative overflow-hidden rounded-[32px] p-5 sm:p-6 flex flex-col justify-between h-44 cursor-pointer transition-all duration-300 ease-out hover:-translate-y-2 hover:shadow-2xl hover:${shadow} ${bg} border border-white/60 shadow-lg shadow-black/5`}
+      {/* 4 Cards Grid */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
+        {metrics.map(({ icon: Icon, label, value, sub, iconColor, accentBg }) => (
+          <div
+            key={label}
+            className="bg-white border border-[#DCE5DC] rounded-2xl p-4 sm:p-5 flex flex-col justify-between shadow-2xs hover:border-[#95B89A] transition-colors"
           >
-            {/* 3D Glassmorphism Highlight Layer */}
-            <div className="absolute inset-0 glass-highlight opacity-50 pointer-events-none rounded-[32px]"></div>
-            
-            {/* Decorative Background Circle */}
-            <div className="absolute -right-6 -top-6 w-24 h-24 bg-white/40 rounded-full blur-xl group-hover:scale-150 transition-transform duration-700 pointer-events-none"></div>
-
-            <div className="relative z-10">
-              <div className="bg-white/80 backdrop-blur-sm w-12 h-12 rounded-2xl flex items-center justify-center mb-3 shadow-sm border border-white/50 group-hover:scale-110 transition-transform duration-300">
-                <Icon className={`${iconColor}`} size={24} strokeWidth={2} />
+            <div>
+              <div
+                className={`w-10 h-10 rounded-xl ${accentBg} border border-[#DCE5DC]/80 flex items-center justify-center mb-3`}
+              >
+                <Icon className={iconColor} size={20} strokeWidth={2} />
               </div>
-              <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">{label}</p>
+              <p className="text-[10px] font-bold text-[#66736B] uppercase tracking-wider">
+                {label}
+              </p>
             </div>
-            
-            <div className="relative z-10 mt-2">
-              <p className="text-2xl sm:text-3xl font-extrabold text-slate-800 tracking-tight drop-shadow-sm">
+
+            <div className="mt-3">
+              <p className="font-serif text-2xl sm:text-3xl font-bold text-[#1B4332] leading-tight">
                 {value}
               </p>
-              <p className="text-xs sm:text-sm text-slate-600 mt-1 font-medium">{sub}</p>
+              <p className="text-xs text-[#66736B] font-medium mt-1 truncate">
+                {sub}
+              </p>
             </div>
           </div>
         ))}
@@ -118,11 +105,5 @@ const WeatherCard = ({ weather }) => {
     </div>
   );
 };
-
-function humidityHint(humidity) {
-  if (humidity > 90) return 'Very high';
-  if (humidity >= 40 && humidity <= 80) return 'Ideal range';
-  return 'Outside ideal';
-}
 
 export default WeatherCard;

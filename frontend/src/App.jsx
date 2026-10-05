@@ -18,13 +18,15 @@ import PrivateRoute from "./components/PrivateRoute";
 
 const DashboardLayout = () => {
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Fixed Sidebar */}
+    <div className="min-h-screen bg-[#F7F5EE] text-[#26332B] font-sans">
+      {/* Fixed Collapsible Sidebar */}
       <Sidebar />
 
-      {/* Main Content */}
-      <main className="min-h-screen p-6 lg:ml-72">
-        <Outlet />
+      {/* Main Content Area */}
+      <main className="min-h-screen p-4 sm:p-6 lg:p-8 lg:ml-72 transition-all duration-300">
+        <div className="max-w-7xl mx-auto">
+          <Outlet />
+        </div>
       </main>
     </div>
   );
@@ -34,8 +36,10 @@ function App() {
   return (
     <Router>
       <Routes>
+        {/* Landing & Authentication Portal */}
         <Route path="/" element={<Signup />} />
 
+        {/* Protected Farmer Platform */}
         <Route element={<PrivateRoute />}>
           <Route element={<DashboardLayout />}>
             <Route path="/dashboard" element={<Dashboard />} />
